@@ -15,16 +15,26 @@ from . import lib_nifti_defs   as lnd
 # ============================================================================
 # mapping rules from NumPy Python types to NIFTI data types.
 
+# The mapping rules are made to address the following situation:
+# having a NumPy array of a given dtype, and wanting to know what the
+# correspondindg NIFTI type (and bitpix) should be.  As a further
+# subtlety, one might have to choose a NIFTI type that has some
+# 'lossyness'; additionally, one might be forced to change the dtype
+# of the array itself, to match with a chooseable or chosen NIFTI
+# type.  Each mapping dictionary includes this rich set of information
+# in its values.
+#
 # There are multiple dictionaries here, because there are (at least) a
 # few major ways that one might want to choose to map all possible
 # NumPy datatypes to NIFTI types. Some of these are due to constraints
 # within the available set of nifti types (and/or the plethora of
 # NumPy types). Some of these are due to practical software
-# considerations.  Some of the mappings might lead to lossy-ness,
-# which we denote here, as well.  Some of these are unavoidable, and
-# some are very unlikely.
+# considerations.  
+# 
+# Some of the mappings might lead to lossy-ness, which we denote here,
+# as well.  Some of these are unavoidable, and some are very unlikely.
 #
-# The structure of the dictionaries here is the same:
+# The structure of the dictionaries here is the same.
 #    key   : NumPy datatype (and this list could grow over time)
 #    value : list of 3 elements:
 #            [0] known NIFTI keyword within type and bitpix fields, to
