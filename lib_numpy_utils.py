@@ -44,6 +44,7 @@ from . import lib_nifti_defs   as lnd
 #                necessity or choice/convenience
 #            [2] a string denoting whether the given dtype->type mapping
 #                will be:
+#                'same'   : no change in type (inherently lossless...)
 #                'noloss' : preserve all values,
 #                'lossy'  : will necessarily lose values, if the full
 #                           input domain is used
@@ -57,51 +58,51 @@ DICT_np_dtype_to_nifti1_type = {
     np.bool        : ["NIFTI_TYPE_UINT8", np.uint8, 
                       'noloss'],
     np.bool_       : ["NIFTI_TYPE_UINT8", np.uint8, 
-                      'noloss'],                              # alias for np.bool
+                      'noloss'],                          # alias for np.bool
     np.uint8       : ["NIFTI_TYPE_UINT8", np.uint8, 
-                      'noloss'],
+                      'same'],
     np.uint16      : ["NIFTI_TYPE_UINT16", np.uint16, 
-                      'noloss'],
+                      'same'],
     np.uint32      : ["NIFTI_TYPE_UINT32", np.uint32, 
-                      'noloss'],
+                      'same'],
     np.uintc       : ["NIFTI_TYPE_UINT32", np.uint32, 
-                      'noloss'],                              # alias for np.uint32
+                      'same'],                            # alias for np.uint32
     np.uint64      : ["NIFTI_TYPE_UINT64", np.uint64, 
-                      'noloss'],    
+                      'same'],    
     np.uint        : ["NIFTI_TYPE_UINT64",np.uint64, 
-                      'noloss'],                              # alias for np.int64
+                      'same'],                            # alias for np.uint64
     np.int8        : ["NIFTI_TYPE_INT8",  np.int8, 
-                      'noloss'],
+                      'same'],
     np.int16       : ["NIFTI_TYPE_INT16", np.int16, 
-                      'noloss'],
+                      'same'],
     np.int32       : ["NIFTI_TYPE_INT32", np.int32, 
-                      'noloss'],
+                      'same'],
     np.intc        : ["NIFTI_TYPE_INT32", np.int32, 
-                      'noloss'],                              # alias for np.uint32
+                      'same'],                            # alias for np.int32
     np.int64       : ["NIFTI_TYPE_INT64", np.int64, 
-                      'noloss'],    
+                      'same'],    
     np.int_        : ["NIFTI_TYPE_INT64", np.int64, 
-                      'noloss'],                              # alias for np.int64
+                      'same'],                            # alias for np.int64
     np.long        : ["NIFTI_TYPE_INT64", np.int64, 
-                      'noloss'],                              # alias for np.int64  
+                      'same'],                            # alias for np.int64
     np.longlong    : ["NIFTI_TYPE_INT64", np.int64, 
-                      'sysdep'],                              # tricky, sys-dep (loss?)
+                      'sysdep'],                          # tricky, sys-dep
     np.float16     : ["NIFTI_TYPE_FLOAT32", np.float32, 
-                      'noloss'],                              # NB: upgrade!
+                      'noloss'],                          # NB: upgrade!
     np.float32     : ["NIFTI_TYPE_FLOAT32", np.float32, 
-                      'noloss'],
+                      'same'],
     np.float64     : ["NIFTI_TYPE_FLOAT64", np.float64, 
-                      'noloss'],
+                      'same'],
     np.double      : ["NIFTI_TYPE_FLOAT64", np.float64, 
-                      'noloss'],                              # alias for np.float64
+                      'same'],                           # alias for np.float64
     np.longdouble  : ["NIFTI_TYPE_FLOAT64", np.float64, 
-                      'sysdep'],                              # tricky, sys-dep
+                      'sysdep'],                          # tricky, sys-dep
     np.complex64   : ["NIFTI_TYPE_COMPLEX64", np.complex64, 
-                      'noloss'],
+                      'same'],
     np.complex128  : ["NIFTI_TYPE_COMPLEX128", np.complex128, 
                       'noloss'],
     np.clongdouble : ["NIFTI_TYPE_COMPLEX128", np.complex128, 
-                      'sysdep'],                              # tricky, sys-dep
+                      'sysdep'],                             # tricky, sys-dep
 }
 
 # how each known NumPy numerical datatype maps to NIFTI codes;
@@ -110,51 +111,51 @@ DICT_np_dtype_to_nifti1_type_reduced = {
     np.bool        : ["NIFTI_TYPE_UINT8", np.uint8, 
                       'noloss'],
     np.bool_       : ["NIFTI_TYPE_UINT8", np.uint8, 
-                      'noloss'],                             # alias for np.bool
+                      'noloss'],                          # alias for np.bool
     np.uint8       : ["NIFTI_TYPE_UINT8", np.uint8, 
-                      'noloss'],
+                      'same'],
     np.uint16      : ["NIFTI_TYPE_UINT16", np.uint16, 
-                      'noloss'],
+                      'same'],
     np.uint32      : ["NIFTI_TYPE_UINT32", np.uint32, 
-                      'noloss'],
+                      'same'],
     np.uintc       : ["NIFTI_TYPE_UINT32", np.uint32, 
-                      'noloss'],                             # alias for np.uint32
+                      'same'],                            # alias for np.uint32
     np.uint64      : ["NIFTI_TYPE_UINT32", np.uint32, 
                       'lossy'],
-    np.uint        : ["NIFTI_TYPE_UINT32",np.uint32, 
-                      'noloss'],                             # alias for np.int64; loss
+    np.uint        : ["NIFTI_TYPE_UINT32", np.uint32, 
+                      'lossy'],                           # alias for np.uint64
     np.int8        : ["NIFTI_TYPE_INT8",  np.int8, 
-                      'noloss'],
+                      'same'],
     np.int16       : ["NIFTI_TYPE_INT16", np.int16, 
-                      'noloss'],
+                      'same'],
     np.int32       : ["NIFTI_TYPE_INT32", np.int32, 
-                      'noloss'],
+                      'same'],
     np.intc        : ["NIFTI_TYPE_INT32", np.int32, 
-                      'noloss'],                             # alias for np.uint32
+                      'same'],                            # alias for np.int32
     np.int64       : ["NIFTI_TYPE_INT32", np.int32, 
                       'lossy'],
     np.int_        : ["NIFTI_TYPE_INT32", np.int32, 
-                      'lossy'],                              # alias for np.int64
+                      'lossy'],                           # alias for np.int64
     np.long        : ["NIFTI_TYPE_INT32", np.int32, 
-                      'lossy'],                              # alias for np.int64
+                      'lossy'],                           # alias for np.int64
     np.longlong    : ["NIFTI_TYPE_INT32", np.int32, 
-                      'lossy'],                              # tricky, sys-dep
+                      'lossy'],                           # tricky, sys-dep
     np.float16     : ["NIFTI_TYPE_FLOAT32", np.float32,
-                      'noloss'],                             # NB: upgrade!
+                      'noloss'],                          # NB: upgrade!
     np.float32     : ["NIFTI_TYPE_FLOAT32", np.float32, 
-                      'noloss'],
+                      'same'],
     np.float64     : ["NIFTI_TYPE_FLOAT32", np.float32, 
                       'lossy'],
     np.double      : ["NIFTI_TYPE_FLOAT32", np.float32, 
-                      'lossy'],                              # alias for np.float64
+                      'lossy'],                          # alias for np.float64
     np.longdouble  : ["NIFTI_TYPE_FLOAT32", np.float32, 
-                      'lossy'],                              # tricky, sys-dep
+                      'lossy'],                           # tricky, sys-dep
     np.complex64   : ["NIFTI_TYPE_COMPLEX64", np.complex64, 
-                      'noloss'],
+                      'same'],
     np.complex128  : ["NIFTI_TYPE_COMPLEX64", np.complex64, 
                       'lossy'],
     np.clongdouble : ["NIFTI_TYPE_COMPLEX64", np.complex64, 
-                      'lossy'],                              # tricky, sys-dep
+                      'lossy'],                             # tricky, sys-dep
 }
 
 # how each known NumPy numerical datatype maps to NIFTI codes;
@@ -164,54 +165,54 @@ DICT_np_dtype_to_nifti1_type_reduced_afni = {
     np.bool        : ["NIFTI_TYPE_UINT8", np.uint8, 
                       'noloss'],
     np.bool_       : ["NIFTI_TYPE_UINT8", np.uint8, 
-                      'noloss'],                             # alias for np.bool
+                      'noloss'],                          # alias for np.bool
     np.uint8       : ["NIFTI_TYPE_UINT8", np.uint8, 
-                      'noloss'],
+                      'same'],
     # MRI_short
     np.int8        : ["NIFTI_TYPE_INT16", np.int16, 
                       'noloss'],
     np.int16       : ["NIFTI_TYPE_INT16", np.int16, 
-                      'noloss'],
+                      'same'],
     # MRI_float
     np.uint16      : ["NIFTI_TYPE_UINT16", np.float32, 
                       'noloss'],
     np.uint32      : ["NIFTI_TYPE_UINT32", np.float32, 
                       'lossy'],
     np.uintc       : ["NIFTI_TYPE_UINT32", np.float32, 
-                      'lossy'],                              # alias for np.uint32
+                      'lossy'],                           # alias for np.uint32
     np.uint64      : ["NIFTI_TYPE_UINT32", np.float32, 
                       'lossy'],
     np.uint        : ["NIFTI_TYPE_UINT32",np.float32, 
-                      'lossy'],                              # alias for np.int64
+                      'lossy'],                           # alias for np.int64
     np.int32       : ["NIFTI_TYPE_INT32", np.float32, 
                       'lossy'],
     np.intc        : ["NIFTI_TYPE_INT32", np.float32, 
-                      'lossy'],                              # alias for np.uint32
+                      'lossy'],                           # alias for np.int32
     np.int64       : ["NIFTI_TYPE_INT32", np.float32,
                       'lossy'],
     np.int_        : ["NIFTI_TYPE_INT32", np.float32,
-                      'lossy'],                              # alias for np.int64
+                      'lossy'],                           # alias for np.int64
     np.long        : ["NIFTI_TYPE_INT32", np.float32,
-                      'lossy'],                              # alias for np.int64
+                      'lossy'],                           # alias for np.int64
     np.longlong    : ["NIFTI_TYPE_INT32", np.float32,
-                      'lossy'],                              # tricky, sys-dep
+                      'lossy'],                           # tricky, sys-dep
     np.float16     : ["NIFTI_TYPE_FLOAT32", np.float32,
-                      'noloss'],                             # NB: upgrade!
+                      'noloss'],                          # NB: upgrade!
     np.float32     : ["NIFTI_TYPE_FLOAT32", np.float32,
-                      'noloss'],
+                      'same'],
     np.float64     : ["NIFTI_TYPE_FLOAT32", np.float32,
                       'lossy'],
     np.double      : ["NIFTI_TYPE_FLOAT32", np.float32,
-                      'lossy'],                              # alias for np.float64
+                      'lossy'],                          # alias for np.float64
     np.longdouble  : ["NIFTI_TYPE_FLOAT32", np.float32,
-                      'lossy'],                              # tricky, sys-dep
+                      'lossy'],                           # tricky, sys-dep
     # MRI_complex
     np.complex64   : ["NIFTI_TYPE_COMPLEX64", np.complex64,
-                      'noloss'],
+                      'same'],
     np.complex128  : ["NIFTI_TYPE_COMPLEX64", np.complex64,
                       'lossy'],
     np.clongdouble : ["NIFTI_TYPE_COMPLEX64", np.complex64,
-                      'lossy'],                              # tricky, sys-dep
+                      'lossy'],                            # tricky, sys-dep
     # MRI_rgb  --- TBD
     # MRI_rgba --- not possible
 }
