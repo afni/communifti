@@ -52,16 +52,28 @@ from . import lib_nifti_defs   as lnd
 #                           and therefore may or may not be lossy, if the
 #                           full input domain is used                    
 
-# keywords for selecting respective mapping rules (AKA dictionary)
-LIST_allowed_np_dtype_maps = [
-    'general',
-    'reduced',
-    'afni_rules',
+# the keys are the special keywords for selecting respective mapping
+# rules (AKA dictionary), given by the value
+DICT_allowed_np_dtype_map_rules = [
+    'general'    : DICT_np_dtype_to_nifti1_type_general,
+    'reduced'    : DICT_np_dtype_to_nifti1_type_reduced,
+    'afni_rules' : DICT_np_dtype_to_nifti1_type_afni_rules,
 ]
-STR_allowed_np_dtype_maps = ', '.join(LIST_allowed_np_dtype_maps)
+LIST_allowed_np_dtype_map_rules = list(DICT_allowed_np_dtype_map_rules.keys())
+STR_allowed_np_dtype_map_rules  = ', '.join(LIST_allowed_np_dtype_map_rules)
+
+# special keywords output during mapping process, to describe the
+# relative dtype-in and dtype-to-be-out
+LIST_allowed_map_desc = [
+    'lossy',
+    'noloss',
+    'same',
+    'sysdep',
+]
+STR_allowed_map_desc = ', '.join(LIST_allowed_map_desc)
 
 # how each known NumPy numerical datatype maps to NIFTI codes;
-#  the 'theoretical' general list for many software
+# the 'theoretical' general list for many software
 DICT_np_dtype_to_nifti1_type_general = {
     np.bool        : ["NIFTI_TYPE_UINT8", np.uint8, 
                       'noloss'],
@@ -303,20 +315,34 @@ ytype : str
     return y, ytype
 
 
-def def translate_numpy_dtype_to_nifti(din, verb=1):
+def translate_numpy_dtype_to_nifti(din, map_rules='reduced', verb=1):
     """The input din is a numpy dtype, likely obtained as the
 attribute describing the elements of some numpy array (e.g.,
 NPARRAY.dtype).  This function determines which NIFTI type and bitpix
 values it will correspond to.
 
-This function also outputs a new type that the array should be
-converted to, for the purpose of writing, if necessary.  (Otherwise,
-the value returned for that information is: None)
+Because life is complicated, some choices have to be made about
+mapping some potential NumPy dtypes to the more restricted set of
+NIFTI types. There are 3 sets of mapping rules, which are basically
+just dictionaries for every known (or found) NumPy dtype.  The user
+must choose one mapping style, via the map_rules kwarg.  The options
+for kwarg values are: 
+     general, reduced, afni_rules
+
+This function will output the NumPy dtype that the should be used for
+the output np.array.  Sometimes this is the same as the input,
+sometimes it is different but lossless, and sometimes lossy (or
+system-dependent potentially lossy).  So, there is a keyword output to
+describe the specific mapping:
+     lossy, noloss, sysdep, same
 
 Parameters
 ----------
 din : (np.ndarray).dtype
     a NumPy array's dtype
+map_rules : str
+    a keyword argument to specify the set of mapping rules to be used
+    (see LIST_allowed_np_dtype_map_rules for opts)
 verb : int
     amount of verbosity to use in general processing
 
@@ -329,38 +355,79 @@ nifti_type : int
 nifti_bitpix : int
     code for the NIFTI header field: bitpix
 dout : (np.ndarray).dtype
-    a NumPy array's dtype
-newtype : int
-    0 for din==dout, else nonzero
+    the recommended NumPy dtype for outputtting, to match nifti_type 
+    and nifti_bitpix
+map_desc : str
+    a special keyword for describing the mapping from din -> dout;
+    see LIST_allowed_map_desc
 
     """
 
     # init null values
     nifti_type   = ''
     nifti_bitpix = ''
-    newtype      = None
+    dout         = None
+    map_desc     = None
 
-    BAD_RETURN = (-1, nifti_type, nifti_bitpix, newtype)
+    BAD_RETURN = (-1, nifti_type, nifti_bitpix, dout, map_desc)
 
-
-    if din in DICT_np_dtype_to_nifti_type_strict.keys():
-        type_key = DICT_np_dtype_to_nifti_type_strict[din]
-    else:
-        # **** TEMPORARY: probably have more conditions here
-        lsu.EP1("Unknown dtype: {}".format(din))
+    # verify map_rules is allowed
+    is_fail, D = select_map_rules(map_rules, verb=verb)
+    if is_fail :
         return BAD_RETURN
-                
-    if din != dout :
-        if verb :
-            msg = "converting dtype {} -> {}".format(d, type_key)
-            lsu.WP(msg)
 
-    nifti_type   = lnd.DICT_nifti_type[dnifti]
-    nifti_bitpix = lnd.DICT_nifti_bitpix[dnifti]
+    # verify key is allowed
+    D_keys = list(D.keys())
+    if din not in D_keys :
+        msg = "NumPy input dtype '{}' not known. ".format(din)
+        msg+= "Should be one of these:\n"
+        msg+= ','.join(D_keys)
+        lsu.EP1(msg)
+        return BAD_RETURN
 
+    # the values from the mapping dict for this input dtype
+    nifti_key, dout, map_desc = D[din]
 
+    # ... and we map the nifti_key code to the actual field values (ints)
+    nifti_type   = lnd.DICT_nifti_type[nifti_key]
+    nifti_bitpix = lnd.DICT_nifti_bitpix[nifti_key]
 
-    return 0, nifti_type, nifti_bitpix, newtype
+    return 0, nifti_type, nifti_bitpix, dout, map_desc
+
+def select_map_rules(map_rules, verb=1):
+    """Verify that the input map_rules str is a valid
+choice. Then output the chosen dictionary.
+
+Parameters
+----------
+map_rules : str
+    a keyword argument (see LIST_allowed_np_dtype_maps for opts)
+verb : int
+    amount of verbosity to use in general processing
+
+Returns
+-------
+is_fail : int
+    0 for success, nonzero for failure
+D : dict
+    the dictionary describing/defining the chosen map_rules
+
+"""
+
+    D = {}
+    BAD_RETURN = ( -2, D)
+
+    # check keyword arg
+    if map_rules not in LIST_allowed_np_dtype_map_rules :
+        msg = "Chosen map_rules '{}' ".format(map_rules)
+        msg+= "not in known list: {}".format(STR_allowed_np_dtype_map_rules)
+        lsu.EP1(msg)
+        return BAD_RETURN
+
+    D = DICT_allowed_np_dtype_map_rules[map_rules]
+
+    return 0, D
+
 
 # ===========================================================================
 
