@@ -52,9 +52,17 @@ from . import lib_nifti_defs   as lnd
 #                           and therefore may or may not be lossy, if the
 #                           full input domain is used                    
 
+# keywords for selecting respective mapping rules (AKA dictionary)
+LIST_allowed_np_dtype_maps = [
+    'general',
+    'reduced',
+    'afni_rules',
+]
+STR_allowed_np_dtype_maps = ', '.join(LIST_allowed_np_dtype_maps)
+
 # how each known NumPy numerical datatype maps to NIFTI codes;
-#  the 'theoretical' list for many software
-DICT_np_dtype_to_nifti1_type = {
+#  the 'theoretical' general list for many software
+DICT_np_dtype_to_nifti1_type_general = {
     np.bool        : ["NIFTI_TYPE_UINT8", np.uint8, 
                       'noloss'],
     np.bool_       : ["NIFTI_TYPE_UINT8", np.uint8, 
@@ -106,7 +114,7 @@ DICT_np_dtype_to_nifti1_type = {
 }
 
 # how each known NumPy numerical datatype maps to NIFTI codes;
-# the 'in practice' list for many software
+# the 'in practice' reduced list for many software
 DICT_np_dtype_to_nifti1_type_reduced = {
     np.bool        : ["NIFTI_TYPE_UINT8", np.uint8, 
                       'noloss'],
@@ -160,7 +168,7 @@ DICT_np_dtype_to_nifti1_type_reduced = {
 
 # how each known NumPy numerical datatype maps to NIFTI codes;
 # the 'in practice' list for AFNI
-DICT_np_dtype_to_nifti1_type_reduced_afni = {
+DICT_np_dtype_to_nifti1_type_afni_rules = {
     # MRI_byte
     np.bool        : ["NIFTI_TYPE_UINT8", np.uint8, 
                       'noloss'],
