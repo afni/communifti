@@ -39,6 +39,10 @@ nib_hdr : Nifti1Header
     grid on which the data array sits
 prefix : str
     name for output dset to be written
+map_rules : str
+    keyword (see lib_numpy_utils.DICT_allowed_np_dtype_map_rules) for
+    the set of rules to apply when figuring out what dtype the data
+    array should have, along with its corresponding NIFTI type/pixdim.
 do_log : bool
     True to do logging of any shell commands, False to not do so
 verb: int
@@ -54,6 +58,7 @@ bnw : BabelNiftiWrite
     """
 
     def __init__( self, data, nib_hdr, prefix,
+                  map_rules="reduced",
                   do_overwrite=False,
                   do_log=False, verb=1 ):
 
@@ -65,6 +70,8 @@ bnw : BabelNiftiWrite
         self.data_in        = data             # 3D or 4D np.ndarray of data
         self.nib_hdr_in     = nib_hdr          # nibabel format hdr (read in)
         self.prefix         = prefix           # output name for dset
+
+        self.map_rules      = map_rules        # keyword from list in lnu
 
         self.do_overwrite   = do_overwrite     # flag to allow overwriting
 
@@ -85,7 +92,7 @@ bnw : BabelNiftiWrite
         tmp = self.check_consistency_all()
         if tmp : return
 
-        tmp = self.synchronize_hdr_all()
+        tmp = self.set_data_dtype_hdr_type()
         if tmp : return
 
         
@@ -124,6 +131,16 @@ bnw : BabelNiftiWrite
             msg+= "{} of them: {}".format(ndim, ', '.join(self.data_dim))
             lsu.EP1(msg)
             return BAD_RETURN
+
+        # verify map_rules keyword is allowed
+        if self.map_rules not in lnu.LIST_allowed_np_dtype_map_rules :
+            ttt = lnu.STR_allowed_np_dtype_map_rules
+            msg = "Chosen map_rules '{}' ".format(self.map_rules)
+            msg+= "not in known list: {}".format(ttt)
+            lsu.EP1(msg)
+            return BAD_RETURN
+
+        return 0
 
     def copy_hdr(self):
         """Do two tasks here about copying the header. First,
@@ -199,6 +216,7 @@ bnw : BabelNiftiWrite
 
         return 0
 
+    '''
     def synchronize_hdr_all(self):
         """Some properties of the data_in array might be different
         than the originally loaded dset (like the dtype or the number
@@ -217,17 +235,23 @@ bnw : BabelNiftiWrite
         # others to add?
 
         return 0
+    '''
 
+    def set_data_dtype_hdr_type(self):
+        """Start from the input data array's current dtype, and see what
+        if it needs to be converted, and what NIFTI type would be most
+        appropriate in any case.  Also warn about potential lossyness"""
 
-    def synchronize_hdr_type(self):
-        """ **** """
-
-        BAD_RETURN = -3
+        BAD_RETURN = -4
 
         # get dtype of data_in arr
-        dtype = self.data_in.dtype
+        din = self.data_in.dtype
 
-        # *****
+        is_fail, nifti_type, nifti_bitpix, dout, map_desc = \
+            lnu.translate_numpy_dtype_to_nifti(din, 
+                                               map_rules=self.map_rules, 
+                                               verb=self.verb)
+        ****
 
         return 0
         
