@@ -52,16 +52,6 @@ from . import lib_nifti_defs   as lnd
 #                           and therefore may or may not be lossy, if the
 #                           full input domain is used                    
 
-# the keys are the special keywords for selecting respective mapping
-# rules (AKA dictionary), given by the value
-DICT_allowed_np_dtype_map_rules = {
-    'general'    : DICT_np_dtype_to_nifti1_type_general,
-    'reduced'    : DICT_np_dtype_to_nifti1_type_reduced,
-    'afni_rules' : DICT_np_dtype_to_nifti1_type_afni_rules,
-}
-LIST_allowed_np_dtype_map_rules = list(DICT_allowed_np_dtype_map_rules.keys())
-STR_allowed_np_dtype_map_rules  = ', '.join(LIST_allowed_np_dtype_map_rules)
-
 # special keywords output during mapping process, to describe the
 # relative dtype-in and dtype-to-be-out
 LIST_allowed_map_desc = [
@@ -237,6 +227,15 @@ DICT_np_dtype_to_nifti1_type_afni_rules = {
     # MRI_rgba --- not possible
 }
 
+# the keys are the special keywords for selecting respective mapping
+# rules (AKA dictionary), given by the value
+DICT_allowed_np_dtype_map_rules = {
+    'general'    : DICT_np_dtype_to_nifti1_type_general,
+    'reduced'    : DICT_np_dtype_to_nifti1_type_reduced,
+    'afni_rules' : DICT_np_dtype_to_nifti1_type_afni_rules,
+}
+LIST_allowed_np_dtype_map_rules = list(DICT_allowed_np_dtype_map_rules.keys())
+STR_allowed_np_dtype_map_rules  = ', '.join(LIST_allowed_np_dtype_map_rules)
 
 # ============================================================================
 
@@ -318,8 +317,8 @@ ytype : str
 def translate_numpy_dtype_to_nifti(din, map_rules='reduced', verb=1):
     """The input din is a numpy dtype, likely obtained as the
 attribute describing the elements of some numpy array (e.g.,
-NPARRAY.dtype).  This function determines which NIFTI type and bitpix
-values it will correspond to.
+NPARRAY.dtype.type).  This function determines which NIFTI type and
+bitpix values it will correspond to.
 
 Because life is complicated, some choices have to be made about
 mapping some potential NumPy dtypes to the more restricted set of
@@ -390,6 +389,10 @@ map_desc : str
         return BAD_RETURN
 
     # the values from the mapping dict for this input dtype
+    if din in D.keys() :
+        print("HEY1")
+    else:
+        print("HEY2")
     nifti_key, dout, map_desc = D[din]
 
     # ... and we map the nifti_key code to the actual field values (ints)
@@ -436,3 +439,5 @@ D : dict
 # ===========================================================================
 
 if __name__ == "__main__" :
+
+    print("++ No examples yet")

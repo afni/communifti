@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-import os
+import os, copy
 import numpy   as     np
 import nibabel as     nib
 
 from . import lib_simple_utils as lsu
 from . import lib_numpy_utils  as lnu
+from . import lib_nifti_defs   as lnd
 
 # ***have to decide about torch tensors, too, as input data arrays??
 
@@ -42,7 +43,7 @@ prefix : str
 map_rules : str
     keyword (see lib_numpy_utils.DICT_allowed_np_dtype_map_rules) for
     the set of rules to apply when figuring out what dtype the data
-    array should have, along with its corresponding NIFTI type/pixdim.
+    array should have, along with its corresponding NIFTI datatype/pixdim.
 do_log : bool
     True to do logging of any shell commands, False to not do so
 verb: int
@@ -97,7 +98,7 @@ bnw : BabelNiftiWrite
         tmp = self.check_consistency_all()
         if tmp : return
 
-        tmp = self.set_data_dtype_hdr_type()
+        tmp = self.set_data_dtype_hdr_datatype()
         if tmp : return
 
         tmp = self.set_hdr_nv()
@@ -144,7 +145,7 @@ bnw : BabelNiftiWrite
             return BAD_RETURN
 
         # check shape of hdr dim array
-        hdr_dim = self.Ndict['dim']
+        hdr_dim = self.nib_hdr_in['dim']
         ndim_hdr = hdr_dim[0]
         if ndim_hdr not in [3, 4, 5] :
             msg = "The hdr does not have 3, 4 or 5 dims, instead it has "
@@ -189,12 +190,12 @@ bnw : BabelNiftiWrite
         data and the hdr.  In this check, we will _exit_ if something
         does not match."""
 
-        if verb :
+        if self.verb :
             lsu.IP("Check consistency of some data and header properties")
 
         BAD_RETURN = -3
 
-        is_fail = self.check_consistency_dim(self)
+        is_fail = self.check_consistency_dim()
         if is_fail :
             return BAD_RETURN
 
@@ -214,7 +215,7 @@ bnw : BabelNiftiWrite
         ndim_data = len(self.data_dim)
 
         # get hdr dim (was checked on input for size)
-        hdr_dim = self.Ndict['dim']
+        hdr_dim = self.Ndict_in['dim']
         ndim_hdr = hdr_dim[0]
 
         # ... and compare just spatial dims
@@ -235,7 +236,7 @@ bnw : BabelNiftiWrite
         of vols). Here we check all ones that are OK to be different,
         and we would also now adjust the header."""
 
-        if verb :
+        if self.verb :
             lsu.IP("Synchronize some data and header properties")
 
         BAD_RETURN = -3
@@ -249,17 +250,17 @@ bnw : BabelNiftiWrite
         return 0
     '''
 
-    def set_data_dtype_hdr_type(self):
+    def set_data_dtype_hdr_datatype(self):
         """Start from the input data array's current dtype, and see what
-        if it needs to be converted, and what NIFTI type would be most
+        if it needs to be converted, and what NIFTI datatype would be most
         appropriate in any case.  Also warn about potential lossyness"""
 
         BAD_RETURN = -4
 
         # get dtype of data_in arr
-        din = self.data_in.dtype
+        din = self.data_in.dtype.type
 
-        is_fail, nifti_key, nifti_type, nifti_bitpix, dout, map_desc = \
+        is_fail, nifti_key, nifti_datatype, nifti_bitpix, dout, map_desc = \
             lnu.translate_numpy_dtype_to_nifti(din, 
                                                map_rules=self.map_rules, 
                                                verb=self.verb)
@@ -267,14 +268,14 @@ bnw : BabelNiftiWrite
             return BAD_RETURN
 
         # save NIFTI-related info
-        self.nifti_key    = nifti_key
-        self.nifti_type   = nifti_type
-        self.nifti_pitbix = nifti_bitpix
-        self.map_desc     = map_desc
+        self.nifti_key      = nifti_key
+        self.nifti_datatype = nifti_datatype
+        self.nifti_pitbix   = nifti_bitpix
+        self.map_desc       = map_desc
 
         # ----- data arr update (if needed)
 
-        # if we have a new type to use, make new output arr
+        # if we have a new datatype to use, make new output arr
         # (otherwise, don't bother; save mem)
         if map_desc != 'same' :
             self.data_out = self.data_in.astype(dout)
@@ -282,12 +283,12 @@ bnw : BabelNiftiWrite
         # ----- hdr update/sync
 
         # both the output header
-        self.nib_hdr_out['type']   = self.nifti_type
-        self.nib_hdr_out['bitpix'] = self.bitpix
+        self.nib_hdr_out['datatype'] = self.nifti_datatype
+        self.nib_hdr_out['bitpix']   = self.nifti_bitpix
 
         # ... and the dict copy of it
-        self.Ndict_out['type']   = self.nifti_type
-        self.Ndict_out['bitpix'] = self.bitpix
+        self.Ndict_out['datatype'] = self.nifti_datatype
+        self.Ndict_out['bitpix']   = self.nifti_bitpix
 
         return 0
 
@@ -415,7 +416,7 @@ Ndict : dict
     # initialize default
     Ndict = {}
 
-    for key in ALL_nifti1_keys :
+    for key in lnd.ALL_nifti1_keys :
         val = nib_hdr.get(key)
         # this next step occurs bc some values are ndim=0 arrays
         val_list, val_type = lnu.try_convert_list_float_int_str_arr(val)

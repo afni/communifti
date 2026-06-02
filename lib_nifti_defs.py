@@ -68,6 +68,8 @@ dict_nifti1 = {
     'magic'           : None,     # char [4]
 }
 
+ALL_nifti1_keys = dict_nifti1.keys()
+
 # dict of unused fields in nifti1 (and their default/constant values)
 dict_nifti1_unused = {
     'data_type'       : b'',      # char [10]
