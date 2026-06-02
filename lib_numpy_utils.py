@@ -389,10 +389,6 @@ map_desc : str
         return BAD_RETURN
 
     # the values from the mapping dict for this input dtype
-    if din in D.keys() :
-        print("HEY1")
-    else:
-        print("HEY2")
     nifti_key, dout, map_desc = D[din]
 
     # ... and we map the nifti_key code to the actual field values (ints)

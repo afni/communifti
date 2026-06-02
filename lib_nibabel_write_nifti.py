@@ -304,6 +304,7 @@ bnw : BabelNiftiWrite
 
         # get ndim from hdr, and figure out what it has for nv
         hdr_dim0 = self.Ndict_in['dim'][0]
+        print("HEY: ", data_nv)
         if hdr_dim0 == 3 :
             hdr_nv = 1
         else:
@@ -372,6 +373,7 @@ bnw : BabelNiftiWrite
         """The spatial (and maybe temporal) dimensions of the data array."""
         return np.shape(self.data_in)
 
+    @property
     def data_nv(self):
         """The number of volumes (nv) in the data array."""
         S  = self.data_dim
