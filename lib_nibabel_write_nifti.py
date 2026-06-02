@@ -77,6 +77,7 @@ bnw : BabelNiftiWrite
 
         # derived attributes
         self.Ndict_in       = {}               # simple dict of nifti fields
+        self.Ndict_out      = {}               # simple dict of nifti fields
         self.nib_hdr_out    = None             # nibabel format hdr (to write)
         self.data_out       = None             # np.ndarray, if converted
         self.nifti_key      = ''
@@ -99,7 +100,13 @@ bnw : BabelNiftiWrite
         tmp = self.set_data_dtype_hdr_type()
         if tmp : return
 
-        
+        tmp = self.set_hdr_nv()
+        if tmp : return
+
+        # ***** add in removing extensions by default ****
+
+        tmp = self.write_dset()
+        if tmp : return
 
 
     # ------ methods
@@ -128,11 +135,20 @@ bnw : BabelNiftiWrite
                 msg+= prefix
                 lsu.WP(msg)
 
-        # check shape
+        # check shape/dims of data array
         ndim = len(self.data_dim)
         if ndim not in [3, 4] :
             msg = "Array does not have 3 or 4 dims, instead it has "
             msg+= "{} of them: {}".format(ndim, ', '.join(self.data_dim))
+            lsu.EP1(msg)
+            return BAD_RETURN
+
+        # check shape of hdr dim array
+        hdr_dim = self.Ndict['dim']
+        ndim_hdr = hdr_dim[0]
+        if ndim_hdr not in [3, 4, 5] :
+            msg = "The hdr does not have 3, 4 or 5 dims, instead it has "
+            msg+= "{} of them: {}".format(ndim_hdr, hdr_dim)
             lsu.EP1(msg)
             return BAD_RETURN
 
@@ -160,10 +176,11 @@ bnw : BabelNiftiWrite
         # task 2
         is_fail, self.Ndict_in = make_dict_of_nibabel_hdr(self.nib_hdr_in, 
                                                           verb=self.verb)
-
         if is_fail :
             lsu.EP1("Failed to make dict of hdr fields from input hdr")
             return BAD_RETURN
+
+        self.Ndict_out = copy.deepcopy(self.Ndict_in)
 
         return 0
 
@@ -188,26 +205,17 @@ bnw : BabelNiftiWrite
     def check_consistency_dim(self):
         """Check consistency of one dset property: nifti field 'dim'.
         Do spatial dimensions of the data and those recorded in the
-        hdr match?"""
+        hdr match? NB: the size/shape of data and nib_hdr dims was checked
+        during setup, so numbers of dims should be OK."""
 
         BAD_RETURN = -3
 
         # get data dims (should have 3 or 4 dims)
         ndim_data = len(self.data_dim)
-        if ndim_data < 3 or ndim_data > 4 :
-            msg = "number of dims in data is not in range [3, 4], "
-            msg+= "but: {}".format(ndim_data)
-            ab.EP1(msg)
-            return BAD_RETURN
 
-        # get hdr dims (should have 3, 4 or 5 dims)
+        # get hdr dim (was checked on input for size)
         hdr_dim = self.Ndict['dim']
         ndim_hdr = hdr_dim[0]
-        if ndim_hdr < 3 or ndim_hdr > 5 :
-            msg = "number of dims in hdr is not in range [3, 5], "
-            msg+= "but: {}".format(ndim_hdr)
-            ab.EP1(msg)
-            return BAD_RETURN
 
         # ... and compare just spatial dims
         for ii in range(3) :
@@ -215,7 +223,7 @@ bnw : BabelNiftiWrite
                 msg = "Mismatch in spatial dims of "
                 msg+= "data: {},\n".format(self.data_dim[:3])
                 msg+= "and in the header: {}".format(hdr_dim[1:4])
-                ab.EP1(msg)
+                lsu.EP1(msg)
                 return BAD_RETURN
 
         return 0
@@ -258,26 +266,125 @@ bnw : BabelNiftiWrite
         if is_fail :
             return BAD_RETURN
 
-        # make a new array here, if nwe need to convert type
-        # (otherwise, don't bother taking up more mem)
-        if map_desc != 'same' :
-            self.data_out = self.data_in.astype(dout)
-
-        # save other info
+        # save NIFTI-related info
         self.nifti_key    = nifti_key
         self.nifti_type   = nifti_type
         self.nifti_pitbix = nifti_bitpix
         self.map_desc     = map_desc
 
+        # ----- data arr update (if needed)
+
+        # if we have a new type to use, make new output arr
+        # (otherwise, don't bother; save mem)
+        if map_desc != 'same' :
+            self.data_out = self.data_in.astype(dout)
+
+        # ----- hdr update/sync
+
+        # both the output header
+        self.nib_hdr_out['type']   = self.nifti_type
+        self.nib_hdr_out['bitpix'] = self.bitpix
+
+        # ... and the dict copy of it
+        self.Ndict_out['type']   = self.nifti_type
+        self.Ndict_out['bitpix'] = self.bitpix
 
         return 0
-        
+
+    def set_hdr_nv(self):
+        """Start from the input data array's shape, and get the number
+        of volumes.  Then check if the header number of volume
+        information needs to be updated."""
+
+        BAD_RETURN = -5
+
+        # get dtype of data_in arr
+        data_nv = self.data_nv
+
+        # get ndim from hdr, and figure out what it has for nv
+        hdr_dim0 = self.Ndict_in['dim'][0]
+        if hdr_dim0 == 3 :
+            hdr_nv = 1
+        else:
+            hdr_nv = self.Ndict_in['dim'][hdr_dim0]
+
+        if data_nv != hdr_nv :
+            # only go through cases we need to edit/update hdr
+
+            if hdr_dim0 == 3 :
+                # hdr was for 3D data, and now we have more vols, so make 4D
+                update_dim0 = 4             # diff
+                update_idx  = 4             # diff
+                update_nv   = data_nv       # diff
+            elif hdr_dim0 > 3 and data_nv == 3 :
+                # hdr was for >3D data, and now we have fewer vols
+                update_dim0 = 3             # diff
+                update_idx  = hdr_dim0      # diff
+                update_nv   = 1             # diff
+            elif hdr_dim0 > 3 and data_nv > 3 :
+                # hdr was for >3D data, and now we have a different >3D
+                update_dim0 = hdr_dim0      # same 
+                update_idx  = hdr_dim0      # same 
+                update_nv   = data_nv       # diff
+            else:
+                msg = "Should not reach here (set_hdr_nv):\n"
+                msg+= "data dims : {}\n".format(self.data_dim)
+                msg+= "hdr dims  : {}\n".format(self.Ndict_in['dim'])
+                lsu.EP1(msg)
+
+            # ----- hdr update/sync
+
+            # both the output header
+            self.nib_hdr_out['dim'][0] = update_dim0
+            self.nib_hdr_out['dim'][update_idx] = update_nv
+
+            # ... and the dict copy of it
+            self.Ndict_out['dim'][0] = update_dim0
+            self.Ndict_out['dim'][update_idx] = update_nv
+
+        return 0
+
+    def write_dset(self):
+        """Write out the NIFTI volume."""
+
+        BAD_RETURN = -6
+
+        # NB: this is not a copy, just a renaming (in case we had to
+        # reformat array, which we might not have done)
+        if self.data_out is not None :
+            dset = self.data_out
+        else:
+            dset = self.data_in
+
+        # *** CHECK: that we don't need to provide affine kwarg
+        # *** separately, bc header should have it
+        ovol = nib.Nifti1Image(dset, header=self.nib_hdr_out)
+
+        nib.save(ovol, self.prefix)
+
+        return 0
+
     # ---------
 
     @property
     def data_dim(self):
-        """The spatial dimensions of the data array."""
+        """The spatial (and maybe temporal) dimensions of the data array."""
         return np.shape(self.data_in)
+
+    def data_nv(self):
+        """The number of volumes (nv) in the data array."""
+        S  = self.data_dim
+        ns = len(S)
+        if ns == 3 :
+            return 1
+        elif ns == 4 :
+            return S[3]
+        else:
+            # should never happen, bc this was checked earlier
+            msg = "Expected 3 or 4 dims in data arr, not {}: ".format(ns)
+            msg = "{}".format(' '.join([str(val) for val in S]))
+            lsu.EP1(msg)
+            return -1
 
 # ----------------------------------------------------------------------------
 

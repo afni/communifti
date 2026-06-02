@@ -54,11 +54,11 @@ from . import lib_nifti_defs   as lnd
 
 # the keys are the special keywords for selecting respective mapping
 # rules (AKA dictionary), given by the value
-DICT_allowed_np_dtype_map_rules = [
+DICT_allowed_np_dtype_map_rules = {
     'general'    : DICT_np_dtype_to_nifti1_type_general,
     'reduced'    : DICT_np_dtype_to_nifti1_type_reduced,
     'afni_rules' : DICT_np_dtype_to_nifti1_type_afni_rules,
-]
+}
 LIST_allowed_np_dtype_map_rules = list(DICT_allowed_np_dtype_map_rules.keys())
 STR_allowed_np_dtype_map_rules  = ', '.join(LIST_allowed_np_dtype_map_rules)
 
