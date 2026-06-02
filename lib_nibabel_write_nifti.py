@@ -44,6 +44,10 @@ map_rules : str
     keyword (see lib_numpy_utils.DICT_allowed_np_dtype_map_rules) for
     the set of rules to apply when figuring out what dtype the data
     array should have, along with its corresponding NIFTI datatype/pixdim.
+do_rm_exts : bool
+    should the extensions be removed from header? (probably...)
+do_overwrite : bool
+    should the dataset be written out if a dset already exists there?
 do_log : bool
     True to do logging of any shell commands, False to not do so
 verb: int
@@ -60,7 +64,7 @@ bnw : BabelNiftiWrite
 
     def __init__( self, data, nib_hdr, prefix,
                   map_rules="reduced",
-                  do_overwrite=False,
+                  do_rm_exts=True, do_overwrite=False,
                   do_log=False, verb=1 ):
 
         # general variables
@@ -73,6 +77,7 @@ bnw : BabelNiftiWrite
         self.prefix         = prefix           # output name for dset
 
         self.map_rules      = map_rules        # keyword from list in lnu
+        self.do_rm_exts     = do_rm_exts       # remove extensions 
 
         self.do_overwrite   = do_overwrite     # flag to allow overwriting
 
@@ -304,7 +309,6 @@ bnw : BabelNiftiWrite
 
         # get ndim from hdr, and figure out what it has for nv
         hdr_dim0 = self.Ndict_in['dim'][0]
-        print("HEY: ", data_nv)
         if hdr_dim0 == 3 :
             hdr_nv = 1
         else:
@@ -358,9 +362,15 @@ bnw : BabelNiftiWrite
         else:
             dset = self.data_in
 
-        # *** CHECK: that we don't need to provide affine kwarg
-        # *** separately, bc header should have it
-        ovol = nib.Nifti1Image(dset, header=self.nib_hdr_out)
+        # need affine as separate arg by position, so just get from hdr
+        oaff = self.nib_hdr_out.get_best_affine()
+
+        # remove extensions
+        if self.do_rm_exts :
+            self.nib_hdr_out.extensions.clear()
+
+
+        ovol = nib.Nifti1Image(dset, oaff, header=self.nib_hdr_out)
 
         nib.save(ovol, self.prefix)
 
