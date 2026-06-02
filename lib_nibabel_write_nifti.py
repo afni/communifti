@@ -78,7 +78,11 @@ bnw : BabelNiftiWrite
         # derived attributes
         self.Ndict_in       = {}               # simple dict of nifti fields
         self.nib_hdr_out    = None             # nibabel format hdr (to write)
-        self.data_out       = None             # np.ndarray to write out
+        self.data_out       = None             # np.ndarray, if converted
+        self.nifti_key      = ''
+        self.nifti_type     = 0
+        self.nifti_bitpix   = 0 
+        self.map_desc       = ''
 
 
         # ------ take action
@@ -247,11 +251,24 @@ bnw : BabelNiftiWrite
         # get dtype of data_in arr
         din = self.data_in.dtype
 
-        is_fail, nifti_type, nifti_bitpix, dout, map_desc = \
+        is_fail, nifti_key, nifti_type, nifti_bitpix, dout, map_desc = \
             lnu.translate_numpy_dtype_to_nifti(din, 
                                                map_rules=self.map_rules, 
                                                verb=self.verb)
-        ****
+        if is_fail :
+            return BAD_RETURN
+
+        # make a new array here, if nwe need to convert type
+        # (otherwise, don't bother taking up more mem)
+        if map_desc != 'same' :
+            self.data_out = self.data_in.astype(dout)
+
+        # save other info
+        self.nifti_key    = nifti_key
+        self.nifti_type   = nifti_type
+        self.nifti_pitbix = nifti_bitpix
+        self.map_desc     = map_desc
+
 
         return 0
         
@@ -259,7 +276,6 @@ bnw : BabelNiftiWrite
 
     @property
     def data_dim(self):
-
         """The spatial dimensions of the data array."""
         return np.shape(self.data_in)
 

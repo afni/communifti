@@ -350,6 +350,9 @@ Returns
 -------
 is_fail : int
     0 for success, nonzero for failure
+nifti_key : str
+    the text string that is the key for type and bitpix dictionaries
+    in the NIFTI definition
 nifti_type : int
     code for the NIFTI header field: type
 nifti_bitpix : int
@@ -364,12 +367,13 @@ map_desc : str
     """
 
     # init null values
-    nifti_type   = ''
-    nifti_bitpix = ''
+    nifti_key    = ''
+    nifti_type   = 0
+    nifti_bitpix = 0
     dout         = None
     map_desc     = None
 
-    BAD_RETURN = (-1, nifti_type, nifti_bitpix, dout, map_desc)
+    BAD_RETURN = (-1, nifti_key, nifti_type, nifti_bitpix, dout, map_desc)
 
     # verify map_rules is allowed
     is_fail, D = select_map_rules(map_rules, verb=verb)
@@ -392,7 +396,7 @@ map_desc : str
     nifti_type   = lnd.DICT_nifti_type[nifti_key]
     nifti_bitpix = lnd.DICT_nifti_bitpix[nifti_key]
 
-    return 0, nifti_type, nifti_bitpix, dout, map_desc
+    return 0, nifti_key, nifti_type, nifti_bitpix, dout, map_desc
 
 def select_map_rules(map_rules, verb=1):
     """Verify that the input map_rules str is a valid
