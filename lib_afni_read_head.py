@@ -17,6 +17,8 @@
 # don't take those as failures, just another reminder that one should
 # not try for strict equality with floating point numbers.
 # 
+#       ** Using this file does _not_ require AFNI to be installed. **
+#
 # auth: PA Taylor (SSCC, NIMH, NIH, USA)
 #
 # ============================================================================

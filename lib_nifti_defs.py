@@ -68,7 +68,7 @@ dict_nifti1 = {
     'magic'           : None,     # char [4]
 }
 
-ALL_nifti1_keys = dict_nifti1.keys()
+ALL_nifti1_keys = list(dict_nifti1.keys())
 
 # dict of unused fields in nifti1 (and their default/constant values)
 dict_nifti1_unused = {
@@ -80,6 +80,8 @@ dict_nifti1_unused = {
     'glmax'           : 0,        # int
     'glmin'           : 0,        # int
 }
+
+ALL_nifti1_unused_keys = list(dict_nifti1_unused.keys())
 
 # ============================================================================
 
@@ -97,7 +99,7 @@ list_nifti1_recalc_from_data = [
 # -> static const nifti_type_ele nifti_type_list
 
 # this is a dictionary of key=name and value=type
-DICT_nifti_type = {
+DICT_nifti_datatype = {
     "DT_UNKNOWN"              :    0,
     "DT_NONE"                 :    0,
     "DT_BINARY"               :    1,
@@ -142,6 +144,8 @@ DICT_nifti_type = {
     "DT_RGBA32"               : 2304,
     "NIFTI_TYPE_RGBA32"       : 2304,
 }
+
+ALL_nifti_datatype_keys = list(DICT_nifti_datatype.keys())
 
 # bits per pixel ("bitpix"), AKA bits per voxel
 DICT_nifti_bitpix = {
@@ -189,6 +193,8 @@ DICT_nifti_bitpix = {
     "DT_RGBA32"               :    4*8,
     "NIFTI_TYPE_RGBA32"       :    4*8,
 }
+
+ALL_nifti_bitpix_keys = list(DICT_nifti_bitpix.keys())
 
 # ============================================================================
 
