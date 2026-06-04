@@ -509,7 +509,9 @@ all_diff_Ndict : dict
 
     num_dict = len(all_Ndict)
     if num_dict != 2 :
-        ab.EP1("This function processes exactly 2 dicts, not {}".format(num_dict))
+        msg = "This function processes exactly 2 dicts, "
+        msg+= "not {}".format(num_dict)
+        ab.EP1(msg)
         return BAD_RETURN
 
     # do the comparison

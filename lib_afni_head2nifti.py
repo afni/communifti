@@ -42,7 +42,7 @@ from .       import lib_afni_read_head as LARH
 
 # which keys in the nifti1 header dict are unmapped from AFNI header?
 # *** candidates (may change...)
-dict_nifti1_unmapped = {
+dict_nifti1_unmapped_by_afni = {
     'sizeof_hdr'      : 348,      ## int
     'cal_max'         : 0.0,      ## float
     'cal_min'         : 0.0,      ## float
@@ -204,12 +204,12 @@ Ndict : dict
     # **** add the remaining ones here
 
     # ... and all the unmapped ones
-    for key in lnd.ALL_nifti1_keys:
-        Ndict[key] = [dict_nifti1_unmapped[key]]
+    for key in dict_nifti1_unmapped_by_afni:
+        Ndict[key] = [dict_nifti1_unmapped_by_afni[key]]
 
     # ... and all the unused ones
     for key in lnd.ALL_nifti1_unused_keys:
-        Ndict[key] = [dict_nifti1_unused[key]]
+        Ndict[key] = [lnd.dict_nifti1_unused[key]]
 
     # ... and all the unused ones ***will be mapped at some point****
     for key in TMP_dict_nifti1_unknown.keys():
