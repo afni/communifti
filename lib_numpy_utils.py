@@ -26,7 +26,7 @@ from . import lib_nifti_defs   as lnd
 #
 # There are multiple dictionaries here, because there are (at least) a
 # few major ways that one might want to choose to map all possible
-# NumPy datatypes to NIFTI types. Some of these are due to constraints
+# NumPy dtypes to NIFTI dtypes. Some of these are due to constraints
 # within the available set of nifti types (and/or the plethora of
 # NumPy types). Some of these are due to practical software
 # considerations.  
@@ -35,7 +35,7 @@ from . import lib_nifti_defs   as lnd
 # as well.  Some of these are unavoidable, and some are very unlikely.
 #
 # The structure of the dictionaries here is the same.
-#    key   : NumPy datatype (and this list could grow over time)
+#    key   : NumPy dtype (and this list could grow over time)
 #    value : list of 3 elements:
 #            [0] known NIFTI keyword within type and bitpix fields, to
 #                which the 'key' dtype will be mapped
@@ -62,7 +62,7 @@ LIST_allowed_map_desc = [
 ]
 STR_allowed_map_desc = ', '.join(LIST_allowed_map_desc)
 
-# how each known NumPy numerical datatype maps to NIFTI codes;
+# how each known NumPy numerical dtype maps to NIFTI codes;
 # the 'theoretical' general list for many software
 DICT_np_dtype_to_nifti1_type_general = {
     np.bool        : ["NIFTI_TYPE_UINT8", np.uint8, 
@@ -115,7 +115,7 @@ DICT_np_dtype_to_nifti1_type_general = {
                       'sysdep'],                             # tricky, sys-dep
 }
 
-# how each known NumPy numerical datatype maps to NIFTI codes;
+# how each known NumPy numerical dtype maps to NIFTI codes;
 # the 'in practice' reduced list for many software
 DICT_np_dtype_to_nifti1_type_reduced = {
     np.bool        : ["NIFTI_TYPE_UINT8", np.uint8, 
@@ -168,7 +168,7 @@ DICT_np_dtype_to_nifti1_type_reduced = {
                       'lossy'],                             # tricky, sys-dep
 }
 
-# how each known NumPy numerical datatype maps to NIFTI codes;
+# how each known NumPy numerical dtype maps to NIFTI codes;
 # the 'in practice' list for AFNI
 DICT_np_dtype_to_nifti1_type_afni_rules = {
     # MRI_byte
@@ -352,12 +352,12 @@ is_fail : int
 nifti_key : str
     the text string that is the key for type and bitpix dictionaries
     in the NIFTI definition
-nifti_type : int
-    code for the NIFTI header field: type
+nifti_datatype : int
+    code for the NIFTI header field: datatype
 nifti_bitpix : int
     code for the NIFTI header field: bitpix
 dout : (np.ndarray).dtype
-    the recommended NumPy dtype for outputtting, to match nifti_type 
+    the recommended NumPy dtype for outputtting, to match nifti_datatype 
     and nifti_bitpix
 map_desc : str
     a special keyword for describing the mapping from din -> dout;
@@ -366,13 +366,13 @@ map_desc : str
     """
 
     # init null values
-    nifti_key    = ''
-    nifti_type   = 0
-    nifti_bitpix = 0
-    dout         = None
-    map_desc     = None
+    nifti_key      = ''
+    nifti_datatype = 0
+    nifti_bitpix   = 0
+    dout           = None
+    map_desc       = None
 
-    BAD_RETURN = (-1, nifti_key, nifti_type, nifti_bitpix, dout, map_desc)
+    BAD_RETURN = (-1, nifti_key, nifti_datatype, nifti_bitpix, dout, map_desc)
 
     # verify map_rules is allowed
     is_fail, D = select_map_rules(map_rules, verb=verb)
@@ -392,10 +392,10 @@ map_desc : str
     nifti_key, dout, map_desc = D[din]
 
     # ... and we map the nifti_key code to the actual field values (ints)
-    nifti_type   = lnd.DICT_nifti_type[nifti_key]
-    nifti_bitpix = lnd.DICT_nifti_bitpix[nifti_key]
+    nifti_datatype = lnd.DICT_nifti_datatype[nifti_key]
+    nifti_bitpix   = lnd.DICT_nifti_bitpix[nifti_key]
 
-    return 0, nifti_key, nifti_type, nifti_bitpix, dout, map_desc
+    return 0, nifti_key, nifti_datatype, nifti_bitpix, dout, map_desc
 
 def select_map_rules(map_rules, verb=1):
     """Verify that the input map_rules str is a valid
