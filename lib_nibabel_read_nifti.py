@@ -84,6 +84,46 @@ nib_hdr : Nifti1Header
 
     return 0, data, nib_hdr
 
+def read_nifti_to_nibabel_simple(fname, verb=1):
+    """For a given NIFTI dset fname simply check+read in the file as a
+Nifti1Image, not as a separated array+hdr pair---see
+read_nifti_to_nibabel() for that.  This function uses nibabel.
+
+Parameters
+----------
+fname : str
+    name of NIFTI dset/file
+verb : int
+    verbosity level for messages whilst working
+
+Returns
+-------
+is_fail : int
+    0 on success, nonzero on failure
+A : nib.Nifti1Image
+    the nibabel-formatted Nifti1Image dset
+
+    """
+
+    BAD_RETURN = (-1, None)
+
+    # check existence of dset
+    if not(os.path.isfile(fname)) :
+        msg = "Input NIFTI fname {} does not exist.".format(fname)
+        lsu.EP1(msg)
+        return BAD_RETURN
+
+    # read dset
+    try:
+        A = nib.load(fname)
+    except:
+        msg = "Failed to read NIFTI dset: {}.".format(fname)
+        lsu.EP1(msg)
+        return BAD_RETURN
+
+    return 0, A
+
+# -------------------------------------------------------------------------
 
 class BabelNiftiWrite:
     """This object is for reuniting, verifying and updating a

@@ -234,27 +234,6 @@ bnw : BabelNiftiWrite
 
         return 0
 
-    '''
-    def synchronize_hdr_all(self):
-        """Some properties of the data_in array might be different
-        than the originally loaded dset (like the dtype or the number
-        of vols). Here we check all ones that are OK to be different,
-        and we would also now adjust the header."""
-
-        if self.verb :
-            lsu.IP("Synchronize some data and header properties")
-
-        BAD_RETURN = -3
-
-        is_fail = self.syncrhonize_hdr_type(self)
-        if is_fail :
-            return BAD_RETURN
-
-        # others to add?
-
-        return 0
-    '''
-
     def set_data_dtype_hdr_datatype(self):
         """Start from the input data array's current dtype, and see what
         if it needs to be converted, and what NIFTI datatype would be most
