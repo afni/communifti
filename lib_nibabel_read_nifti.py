@@ -249,7 +249,7 @@ bnw : BabelNiftiWrite
             else:
                 msg = "Will overwrite existing file:\n"
                 msg+= prefix
-                lsu.WP(msg)
+                lsu.IP(msg)
 
         # check shape/dims of data array
         ndim = len(self.data_dim)
