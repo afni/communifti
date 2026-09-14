@@ -98,7 +98,7 @@ list_nifti1_recalc_from_data = [
 # See afni/src/nifti/niftilib/nifti1_io.c
 # -> static const nifti_type_ele nifti_type_list
 
-# this is a dictionary of key=name and value=type
+# this is a dictionary of key=name and value=datatype (or =code)
 DICT_nifti_datatype = {
     "DT_UNKNOWN"              :    0,
     "DT_NONE"                 :    0,
@@ -147,51 +147,52 @@ DICT_nifti_datatype = {
 
 ALL_nifti_datatype_keys = list(DICT_nifti_datatype.keys())
 
-# bits per pixel ("bitpix"), AKA bits per voxel
-DICT_nifti_bitpix = {
-    "DT_UNKNOWN"              :    0*8,
-    "DT_NONE"                 :    0*8,
-    "DT_BINARY"               :    1*8,
-    "DT_UNSIGNED_CHAR"        :    1*8,
-    "DT_UINT8"                :    1*8,
-    "NIFTI_TYPE_UINT8"        :    1*8,
-    "DT_SIGNED_SHORT"         :    2*8,
-    "DT_INT16"                :    2*8,
-    "NIFTI_TYPE_INT16"        :    2*8,
-    "DT_SIGNED_INT"           :    4*8,
-    "DT_INT32"                :    4*8,
-    "NIFTI_TYPE_INT32"        :    4*8,
-    "DT_FLOAT"                :    4*8,
-    "DT_FLOAT32"              :    4*8,
-    "NIFTI_TYPE_FLOAT32"      :    4*8,
-    "DT_COMPLEX"              :    8*8,
-    "DT_COMPLEX64"            :    8*8,
-    "NIFTI_TYPE_COMPLEX64"    :    8*8,
-    "DT_DOUBLE"               :    8*8,
-    "DT_FLOAT64"              :    8*8,
-    "NIFTI_TYPE_FLOAT64"      :    8*8,
-    "DT_RGB"                  :    3*8,
-    "DT_RGB24"                :    3*8,
-    "NIFTI_TYPE_RGB24"        :    3*8,
-    "DT_ALL"                  :    0*8,
-    "DT_INT8"                 :    1*8,
-    "NIFTI_TYPE_INT8"         :    1*8,
-    "DT_UINT16"               :    2*8,
-    "NIFTI_TYPE_UINT16"       :    2*8,
-    "DT_UINT32"               :    4*8,
-    "NIFTI_TYPE_UINT32"       :    4*8,
-    "DT_INT64"                :    8*8,
-    "NIFTI_TYPE_INT64"        :    8*8,
-    "DT_UINT64"               :    8*8,
-    "NIFTI_TYPE_UINT64"       :    8*8,
-    "DT_FLOAT128"             :   16*8,
-    "NIFTI_TYPE_FLOAT128"     :   16*8,
-    "DT_COMPLEX128"           :   16*8,
-    "NIFTI_TYPE_COMPLEX128"   :   16*8,
-    "DT_COMPLEX256"           :   32*8,
-    "NIFTI_TYPE_COMPLEX256"   :   32*8,
-    "DT_RGBA32"               :    4*8,
-    "NIFTI_TYPE_RGBA32"       :    4*8,
+# bits per pixel ("bitpix"), AKA bits per voxel (datatype code shown, too);
+# see nifti1.h for the datatype code and bitpix values
+DICT_nifti_bitpix = {         # bit/vox      code
+    "DT_UNKNOWN"              :    0,     #    0 
+    "DT_NONE"                 :    0,     #    0 
+    "DT_BINARY"               :    1,     #    1 (would be problematic: no /8)
+    "DT_UNSIGNED_CHAR"        :    1*8,   #    2 
+    "DT_UINT8"                :    1*8,   #    2 
+    "NIFTI_TYPE_UINT8"        :    1*8,   #    2 
+    "DT_SIGNED_SHORT"         :    2*8,   #    4 
+    "DT_INT16"                :    2*8,   #    4 
+    "NIFTI_TYPE_INT16"        :    2*8,   #    4 
+    "DT_SIGNED_INT"           :    4*8,   #    8 
+    "DT_INT32"                :    4*8,   #    8 
+    "NIFTI_TYPE_INT32"        :    4*8,   #    8 
+    "DT_FLOAT"                :    4*8,   #   16 
+    "DT_FLOAT32"              :    4*8,   #   16 
+    "NIFTI_TYPE_FLOAT32"      :    4*8,   #   16 
+    "DT_COMPLEX"              :    8*8,   #   32 
+    "DT_COMPLEX64"            :    8*8,   #   32 
+    "NIFTI_TYPE_COMPLEX64"    :    8*8,   #   32 
+    "DT_DOUBLE"               :    8*8,   #   64 
+    "DT_FLOAT64"              :    8*8,   #   64 
+    "NIFTI_TYPE_FLOAT64"      :    8*8,   #   64 
+    "DT_RGB"                  :    3*8,   #  128 
+    "DT_RGB24"                :    3*8,   #  128 
+    "NIFTI_TYPE_RGB24"        :    3*8,   #  128 
+    "DT_ALL"                  :    0  ,   #  255 
+    "DT_INT8"                 :    1*8,   #  256 
+    "NIFTI_TYPE_INT8"         :    1*8,   #  256 
+    "DT_UINT16"               :    2*8,   #  512 
+    "NIFTI_TYPE_UINT16"       :    2*8,   #  512 
+    "DT_UINT32"               :    4*8,   #  768 
+    "NIFTI_TYPE_UINT32"       :    4*8,   #  768 
+    "DT_INT64"                :    8*8,   # 1024 
+    "NIFTI_TYPE_INT64"        :    8*8,   # 1024 
+    "DT_UINT64"               :    8*8,   # 1280 
+    "NIFTI_TYPE_UINT64"       :    8*8,   # 1280 
+    "DT_FLOAT128"             :   16*8,   # 1536 
+    "NIFTI_TYPE_FLOAT128"     :   16*8,   # 1536 
+    "DT_COMPLEX128"           :   16*8,   # 1792 
+    "NIFTI_TYPE_COMPLEX128"   :   16*8,   # 1792 
+    "DT_COMPLEX256"           :   32*8,   # 2048 
+    "NIFTI_TYPE_COMPLEX256"   :   32*8,   # 2048 
+    "DT_RGBA32"               :    4*8,   # 2304 
+    "NIFTI_TYPE_RGBA32"       :    4*8,   # 2304 
 }
 
 ALL_nifti_bitpix_keys = list(DICT_nifti_bitpix.keys())
@@ -202,3 +203,47 @@ if __name__ == "__main__" :
 
     # example use cases
     print("++ None yet")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
