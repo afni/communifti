@@ -386,6 +386,8 @@ verb : int
         ints, floats or strings).
         """
 
+        BAD_RETURN = -1
+
         if self.verb > 1 :
             print("++ Make attribute dictionary (Adict)")
 
@@ -400,6 +402,8 @@ verb : int
             if atype == 'string-attribute' :
                 is_fail, avalue = parse_string_attribute(aname, avalue, 
                                                          verb=self.verb)
+                if is_fail : 
+                    return BAD_RETURN
 
             self.Adict[aname] = copy.deepcopy(avalue)
 
