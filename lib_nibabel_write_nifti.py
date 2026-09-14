@@ -301,12 +301,12 @@ bnw : BabelNiftiWrite
                 update_dim0 = 4             # diff
                 update_idx  = 4             # diff
                 update_nv   = data_nv       # diff
-            elif hdr_dim0 > 3 and data_nv == 3 :
+            elif hdr_dim0 > 3 and data_nv == 1 :
                 # hdr was for >3D data, and now we have fewer vols
                 update_dim0 = 3             # diff
                 update_idx  = hdr_dim0      # diff
                 update_nv   = 1             # diff
-            elif hdr_dim0 > 3 and data_nv > 3 :
+            elif hdr_dim0 > 3 and data_nv > 1 :
                 # hdr was for >3D data, and now we have a different >3D
                 update_dim0 = hdr_dim0      # same 
                 update_idx  = hdr_dim0      # same 
