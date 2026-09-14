@@ -151,7 +151,7 @@ ALL_nifti_datatype_keys = list(DICT_nifti_datatype.keys())
 DICT_nifti_bitpix = {
     "DT_UNKNOWN"              :    0*8,
     "DT_NONE"                 :    0*8,
-    "DT_BINARY"               :    0*8,
+    "DT_BINARY"               :    1*8,
     "DT_UNSIGNED_CHAR"        :    1*8,
     "DT_UINT8"                :    1*8,
     "NIFTI_TYPE_UINT8"        :    1*8,
