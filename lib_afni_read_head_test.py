@@ -131,12 +131,14 @@ is_fail : int
         cmd   = """cat {}""".format(prefix_diff_full)
         com   = AB.shell_com(cmd, capture=1)
         stat2 = com.run()
+
+        if stat2 :
+            print("** ERROR: cat command to disp diff content failed")
+            return BAD_RETURN
+
+    # using com.so here is correct in either above case of shell_com()
     text_list = com.so
     nlines = len(text_list)
-
-    if stat2 :
-        print("** ERROR: cat command to disp diff content failed")
-        return BAD_RETURN
 
     if verb :
         msg = "++ Comparison complete. "
