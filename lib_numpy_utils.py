@@ -208,27 +208,27 @@ if NP_V2_PLUS :
         np.int16       : ["NIFTI_TYPE_INT16", np.int16, 
                           'same'],
         # MRI_float
-        np.uint16      : ["NIFTI_TYPE_UINT16", np.float32, 
+        np.uint16      : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'noloss'],
-        np.uint32      : ["NIFTI_TYPE_UINT32", np.float32, 
+        np.uint32      : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'lossy'],
-        np.uintc       : ["NIFTI_TYPE_UINT32", np.float32, 
+        np.uintc       : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'lossy'],                       # alias for np.uint32
-        np.uint64      : ["NIFTI_TYPE_UINT32", np.float32, 
+        np.uint64      : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'lossy'],
-        np.uint        : ["NIFTI_TYPE_UINT32",np.float32, 
+        np.uint        : ["NIFTI_TYPE_FLOAT32",np.float32, 
                           'lossy'],                       # alias for np.int64
-        np.int32       : ["NIFTI_TYPE_INT32", np.float32, 
+        np.int32       : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'lossy'],
-        np.intc        : ["NIFTI_TYPE_INT32", np.float32, 
+        np.intc        : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'lossy'],                       # alias for np.int32
-        np.int64       : ["NIFTI_TYPE_INT32", np.float32,
+        np.int64       : ["NIFTI_TYPE_FLOAT32", np.float32,
                           'lossy'],
-        np.int_        : ["NIFTI_TYPE_INT32", np.float32,
+        np.int_        : ["NIFTI_TYPE_FLOAT32", np.float32,
                           'lossy'],                       # alias for np.int64
-        np.long        : ["NIFTI_TYPE_INT32", np.float32,
+        np.long        : ["NIFTI_TYPE_FLOAT32", np.float32,
                           'lossy'],                       # alias for np.int64
-        np.longlong    : ["NIFTI_TYPE_INT32", np.float32,
+        np.longlong    : ["NIFTI_TYPE_FLOAT32", np.float32,
                           'lossy'],                       # tricky, sys-dep
         np.float16     : ["NIFTI_TYPE_FLOAT32", np.float32,
                           'noloss'],                      # NB: gets upgraded
@@ -382,27 +382,27 @@ else:
         np.int16       : ["NIFTI_TYPE_INT16", np.int16, 
                           'same'],
         # MRI_float
-        np.uint16      : ["NIFTI_TYPE_UINT16", np.float32, 
+        np.uint16      : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'noloss'],
-        np.uint32      : ["NIFTI_TYPE_UINT32", np.float32, 
+        np.uint32      : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'lossy'],
-        np.uintc       : ["NIFTI_TYPE_UINT32", np.float32, 
+        np.uintc       : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'lossy'],                       # alias for np.uint32
-        np.uint64      : ["NIFTI_TYPE_UINT32", np.float32, 
+        np.uint64      : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'lossy'],
-        np.uint        : ["NIFTI_TYPE_UINT32",np.float32, 
+        np.uint        : ["NIFTI_TYPE_FLOAT32",np.float32, 
                           'lossy'],                       # alias for np.int64
-        np.int32       : ["NIFTI_TYPE_INT32", np.float32, 
+        np.int32       : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'lossy'],
-        np.intc        : ["NIFTI_TYPE_INT32", np.float32, 
+        np.intc        : ["NIFTI_TYPE_FLOAT32", np.float32, 
                           'lossy'],                       # alias for np.int32
-        np.int64       : ["NIFTI_TYPE_INT32", np.float32,
+        np.int64       : ["NIFTI_TYPE_FLOAT32", np.float32,
                           'lossy'],
-        np.int_        : ["NIFTI_TYPE_INT32", np.float32,
+        np.int_        : ["NIFTI_TYPE_FLOAT32", np.float32,
                           'lossy'],                       # alias for np.int64
-        #np.long        : ["NIFTI_TYPE_INT32", np.float32,
+        #np.long        : ["NIFTI_TYPE_FLOAT32", np.float32,
         #                  'lossy'],                      # alias for np.int64
-        np.longlong    : ["NIFTI_TYPE_INT32", np.float32,
+        np.longlong    : ["NIFTI_TYPE_FLOAT32", np.float32,
                           'lossy'],                       # tricky, sys-dep
         np.float16     : ["NIFTI_TYPE_FLOAT32", np.float32,
                           'noloss'],                      # NB: upgrade!
