@@ -390,7 +390,7 @@ scl_slope : float
         # we take ALL values from the dictionary array here
         is_fail, arr_btypes = extract_first_n_int(btypes,
                                                   wall_value=None,
-                                                  min_len=0,
+                                                  min_len=1,
                                                   verb=verb)
         if is_fail :
             print("** Error: failed to extract array for key " + key)
