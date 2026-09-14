@@ -385,7 +385,7 @@ bnw : BabelNiftiWrite
         # save NIFTI-related info
         self.nifti_key      = nifti_key
         self.nifti_datatype = nifti_datatype
-        self.nifti_pitbix   = nifti_bitpix
+        self.nifti_bitpix   = nifti_bitpix
         self.map_desc       = map_desc
 
         # ----- data arr update (if needed)
