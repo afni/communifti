@@ -864,7 +864,7 @@ M : list (of str)
 
     if not(attr_type in LIST_attribute_types) :
         print("** ERROR:")
-        print("   Unknown attribute type: {}".format(self.type))
+        print("   Unknown attribute type: {}".format(attr_type))
         print("   Not in recognized list of types:")
         print("     {}".format(STR_attribute_types))
         return BAD_RETURN
