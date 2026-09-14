@@ -585,7 +585,7 @@ map_desc : str
     if din not in D_keys :
         msg = "NumPy input dtype '{}' not known. ".format(din)
         msg+= "Should be one of these:\n"
-        msg+= ', '.join([x.__name__ for x in D_keys)
+        msg+= ', '.join([x.__name__ for x in D_keys])
         lsu.EP1(msg)
         return BAD_RETURN
 
