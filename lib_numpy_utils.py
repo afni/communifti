@@ -482,12 +482,14 @@ ytype : str
     # reasonable/generic type.
 
     import numpy as np
+    import sys
 
     if not(isinstance(x, np.ndarray)) :
         xtype = lsu.simple_type(x)
-        msg   = "Input must be of type 'str', not '{}'".format(xtype)
+        msg   = "Input must be of type 'np.ndarray', not '{}'".format(xtype)
         if exit_on_error :
             print("** ERROR: " + msg, flush=True)
+            sys.exit(-1)
         else:
             print("+* WARNING: " + msg, flush=True)
             return None, xtype
