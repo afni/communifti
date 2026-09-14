@@ -433,16 +433,19 @@ scl_slope : float
     if BTYPE_IS_CONST and FFAC_IS_CONST :
         is_fail, mri_type_name, datatype, bitpix = \
             translate_afni_type_int_to_nifti(max_btype)
+        if is_fail :  return BAD_RETURN
+
         scl_slope = max_ffacs
     else:
         if not(FFAC_IS_CONST) :
             print("**** AT PRESENT, CANNOT DEAL WITH VARIED FLOAT FACS ****"
                   "\n    {}".format(bffacs))
+            return BAD_RETURN
+
         if not(BTYPE_IS_CONST) :
             print("**** AT PRESENT, CANNOT DEAL WITH VARIED BRICK TYPES ****"
                   "\n    {}".format(arr_btypes))
-
-        return BAD_RETURN
+            return BAD_RETURN
 
     # apparently, this is the case for zero slope?
     if not(scl_slope) :
