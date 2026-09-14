@@ -344,6 +344,13 @@ scl_slope : float
     bitpix    = 0
     scl_slope = 0.0
 
+    # initialize secondary/intermed/opt quants (bc of optional
+    # float_facs attribute, below)
+    bffacs        = None
+    min_ffacs     = 0.0
+    max_ffacs     = 0.0
+    FFAC_IS_CONST = True
+
     # require this attribute, and parse if it exists
     key = 'BRICK_TYPES'
     if key in Adict.keys() :
@@ -379,25 +386,17 @@ scl_slope : float
             print(msg)
             return BAD_RETURN
 
+        # ... and check and see if float facts are const
+        min_ffacs = min(bffacs)
+        max_ffacs = max(bffacs)
+        FFAC_IS_CONST = ( min_ffacs == max_ffacs )
+
     # get the min/max of type codes
     min_btype = min(arr_btypes)
     max_btype = max(arr_btypes)
     
     # does the BRIK/HEAD dset have const type?
     BTYPE_IS_CONST = (min_btype == max_btype)
-
-    # see if we have any float_facs that are also nonzero; if
-    # float_facs exist, also check and see if they are constant
-    try:
-        min_ffacs = min(bffacs)
-        max_ffacs = max(bffacs)
-
-        # could be True or False, or an error leading to the except branch
-        FFAC_IS_NZ    = max(bffacs) > 0.0
-        FFAC_IS_CONST = ( min_ffacs == max_ffacs )
-    except:
-        FFAC_IS_NZ    = False
-        FFAC_IS_CONST = True
 
     # ----- now combine info from above
 
@@ -413,8 +412,7 @@ scl_slope : float
             print("**** AT PRESENT, CANNOT DEAL WITH VARIED BRICK TYPES ****"
                   "\n    {}".format(arr_btypes))
 
-        sys.exit(-1)
-
+        return BAD_RETURN
 
     # apparently, this is the case for zero slope?
     if not(scl_slope) :
