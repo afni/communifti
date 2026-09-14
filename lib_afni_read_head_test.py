@@ -53,13 +53,13 @@ is_fail : int
 
     # ----- make reports
 
-    is_fail = create_report_3dAttribute(inset_full, pref_lrh_full, 
+    is_fail = create_report_3dAttribute(inset_full, pref_3dA_full, 
                                         verb=verb)
     if is_fail :
         print("** ERROR: failed to create report with 3dAttribute")
         return BAD_RETURN
     
-    is_fail = create_report_read_head(inset_full, pref_3dA_full, 
+    is_fail = create_report_read_head(inset_full, pref_lrh_full, 
                                       verb=verb)
     if is_fail :
         print("** ERROR: failed to create report with lib_read_head.py")
