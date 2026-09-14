@@ -270,9 +270,9 @@ bnw : BabelNiftiWrite
         self.nib_hdr_out['datatype'] = self.nifti_datatype
         self.nib_hdr_out['bitpix']   = self.nifti_bitpix
 
-        # ... and the dict copy of it
-        self.Ndict_out['datatype'] = self.nifti_datatype
-        self.Ndict_out['bitpix']   = self.nifti_bitpix
+        # ... and the dict copy of it (recall: each Ndict element is a list)
+        self.Ndict_out['datatype'] = [self.nifti_datatype]
+        self.Ndict_out['bitpix']   = [self.nifti_bitpix]
 
         return 0
 
