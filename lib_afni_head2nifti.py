@@ -1240,22 +1240,22 @@ Returns
 -------
 is_fail : int
     0 on success, nonzero on failure
-quatern_b : 
+quatern_b : float
     quaternion element
-quatern_c : 
+quatern_c : float
     quaternion element
-quatern_d : 
+quatern_d : float
     quaternion element
-qoffset_x : 
+qoffset_x : float
     quaternion offset
-qoffset_y : 
+qoffset_y : float
     quaternion offset
-qoffset_z : 
+qoffset_z : float
     quaternion offset
 
     """
 
-    BAD_RETURN = (-1, 0.0, 0.0, 0.0)
+    BAD_RETURN = (-1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
     # verify lengths
     srow_all = [srow_x, srow_y, srow_z]
