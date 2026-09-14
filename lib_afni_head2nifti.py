@@ -176,10 +176,10 @@ Ndict : dict
     is_fail5, qform_code, sform_code = calc_nifti_qsform_code(Adict, verb=verb)
     is_fail6, srow_x, srow_y, srow_z = calc_nifti_srow_xyz(Adict, verb=verb)
     is_fail7, quatern_b, quatern_c, quatern_d, \
-              qoffset_x, qoffset_y, qoffset_z = \
+              qoffset_x, qoffset_y, qoffset_z, qfac = \
                   calc_nifti_quatern_and_qoffset(srow_x, srow_y, srow_z, 
                                                   verb=verb)
-    is_fail8, pixdim       = calc_nifti_pixdim(Adict, verb=verb)
+    is_fail8, pixdim       = calc_nifti_pixdim(Adict, qfac, verb=verb)
     # **** add the remaining ones here
 
     # apply all of those
@@ -221,11 +221,15 @@ Ndict : dict
 # calculate nifti fields: 
 # + pixdim : float [8]
 
-def calc_nifti_pixdim( Adict, verb=1 ):
+def calc_nifti_pixdim( Adict, qfac, verb=1 ):
     """Given the dictionary of AFNI header attributes Adict calculate what
 the corresponding pixdim would be, that is, what the voxel dimension
 info is. If the dset has a proper time axis (not just being >1 volume,
 but really a *time* axis), then that TR info is stored here, too.
+
+The pixdim[0] technically comes from the qfac calculated elsewhere
+with the quaternion conversions in calc_nifti_quatern_and_qoffset(),
+and so it is simply provided here.
 
 This checks for these AFNI header attributes:
 + DELTA : Three numbers giving the (x,y,z) voxel sizes, in the same
@@ -285,7 +289,7 @@ pixdim : list of floats
 
     # storing the 'qfac' value, which can be 1 or -1
     # **** not sure when it will ever be -1? ****
-    pixdim[0] = 1.0
+    pixdim[0] = qfac
 
     # spatial pixdim values
     for ii in range(3):
@@ -1203,6 +1207,7 @@ srow_z :
 # + qoffset_x - float
 # + qoffset_y - float
 # + qoffset_z - float
+# + ... and qfac -> which determines pixdim[0]
 
 # here, just translate the srow_x, srow_y and srow_z info directly;
 # basically do what the nifti_dmat44_to_quatern(...) function in in
@@ -1250,10 +1255,12 @@ qoffset_y : float
     quaternion offset
 qoffset_z : float
     quaternion offset
+qfac : float
+    a value describing dset orientation, later will be pixdim[0]
 
     """
 
-    BAD_RETURN = (-1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    BAD_RETURN = (-1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
     # verify lengths
     srow_all = [srow_x, srow_y, srow_z]
@@ -1314,6 +1321,8 @@ qoffset_z : float
     else :                               # improper ==> flip 3rd column
         qfac = -1.0
         r13  = -r13 ; r23 = -r23 ; r33 = -r33
+        print("++ NB: the qfac = -1.0, meaning the data is left-handed,")
+        print("   and so pixdim[0] will also be -1.")
 
     # ----- now, compute quaternion parameters
 
@@ -1353,7 +1362,8 @@ qoffset_z : float
     quatern_d = d
 
     return 0, float(quatern_b), float(quatern_c), float(quatern_d), \
-        float(qoffset_x), float(qoffset_y), float(qoffset_z)
+        float(qoffset_x), float(qoffset_y), float(qoffset_z), \
+        qfac
 
 
 # ============================================================================
