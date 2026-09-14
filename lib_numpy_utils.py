@@ -487,9 +487,9 @@ ytype : str
         xtype = lsu.simple_type(x)
         msg   = "Input must be of type 'str', not '{}'".format(xtype)
         if exit_on_error :
-            ab.EP(msg)
+            print("** ERROR: " + msg, flush=True)
         else:
-            ab.WP(msg)
+            print("+* WARNING: " + msg, flush=True)
             return None, xtype
 
     # check first if x can be converted to a list
@@ -585,7 +585,7 @@ map_desc : str
     if din not in D_keys :
         msg = "NumPy input dtype '{}' not known. ".format(din)
         msg+= "Should be one of these:\n"
-        msg+= ','.join(D_keys)
+        msg+= ', '.join([x.__name__ for x in D_keys)
         lsu.EP1(msg)
         return BAD_RETURN
 
