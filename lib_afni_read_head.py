@@ -92,6 +92,9 @@ Adict : dict
     BAD_RETURN = (-1, 0)
 
     x = HeadFile(fname, add_defaults=add_defaults, verb=verb)
+    if x.is_fail :
+        return BAD_RETURN
+
     Adict = x.Adict
 
     return 0, Adict
@@ -129,6 +132,7 @@ verb : int
 
         # general variables
         self.verb            = verb
+        self.is_fail         = 0              # to encode success/failure
 
         # main filenames
         self.inset           = inset
@@ -144,24 +148,24 @@ verb : int
         # ----- take action(s)
 
         if not(inset is None) :
-            tmp = self.load_inset()
-            if tmp : return
+            self.is_fail = self.load_inset()
+            if self.is_fail : return
 
-            tmp = self.read_headset()
-            if tmp : return
+            self.is_fail = self.read_headset()
+            if self.is_fail : return
 
-            tmp = self.extract_attributes()
-            if tmp : return
+            self.is_fail = self.extract_attributes()
+            if self.is_fail : return
 
             if add_defaults : 
-                tmp = self.set_default_attributes()
-                if tmp : return
+                self.is_fail = self.set_default_attributes()
+                if self.is_fail : return
 
-            tmp = self.make_Adict()
-            if tmp : return
+            self.is_fail = self.make_Adict()
+            if self.is_fail : return
 
-            tmp = self.make_report()
-            if tmp : return
+            self.is_fail = self.make_report()
+            if self.is_fail : return
 
     # ----- methods
 
