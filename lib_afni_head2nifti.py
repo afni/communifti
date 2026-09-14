@@ -127,8 +127,12 @@ Ndict : dict
 
     BAD_RETURN = (-1, {})
 
-    # read BRIK/HEAD dataset to make Adict
-    is_fail, Adict = LARH.read_brik_head_attributes(inset, verb=verb)
+    # read BRIK/HEAD dataset to make Adict (set add_defaults=False, so
+    # mainly for some qform_code/sform_code considerations to
+    # correctly come from backup attributes in older dsets)
+    is_fail, Adict = LARH.read_brik_head_attributes( inset, 
+                                                     add_defaults=False,
+                                                     verb=verb )
     if is_fail :
         print("** ERROR: failed to read BRIK/HEAD file: {}".format(inset))
         return BAD_RETURN

@@ -63,7 +63,7 @@ DICT_default_attributes = {
 # read AFNI brik/head file
 # produce 'attribute dictionary' (Adict), without any AFNI dependencies
 
-def read_brik_head_attributes(fname, verb=1):
+def read_brik_head_attributes(fname, add_defaults=True, verb=1):
     """For a given AFNI-formatted BRIK/HEAD dset, called fname, read in
 all attributes to a dictionary. 
 
@@ -74,6 +74,9 @@ Parameters
 ----------
 fname : str
     BRIK/HEAD-format dset filename
+add_defaults : bool
+    add in extra BRIK/HEAD attributes that might be missing in older
+    dsets, which are stored in DICT_default_attributes
 verb : int
     verbosity level for messages whilst working
 
@@ -88,7 +91,7 @@ Adict : dict
 
     BAD_RETURN = (-1, 0)
 
-    x = HeadFile(fname, verb=verb)
+    x = HeadFile(fname, add_defaults=add_defaults, verb=verb)
     Adict = x.Adict
 
     return 0, Adict
