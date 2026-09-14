@@ -144,13 +144,24 @@ verb : int
         # ----- take action(s)
 
         if not(inset is None) :
-            tmp1 = self.load_inset()
-            tmp2 = self.read_headset()
-            tmp3 = self.extract_attributes()
+            tmp = self.load_inset()
+            if tmp : return
+
+            tmp = self.read_headset()
+            if tmp : return
+
+            tmp = self.extract_attributes()
+            if tmp : return
+
             if add_defaults : 
-                tmp3b = self.set_default_attributes()
-            tmp4 = self.make_Adict()
-            tmp5 = self.make_report()
+                tmp = self.set_default_attributes()
+                if tmp : return
+
+            tmp = self.make_Adict()
+            if tmp : return
+
+            tmp = self.make_report()
+            if tmp : return
 
     # ----- methods
 
@@ -518,9 +529,14 @@ L : list (of str)
         # ----- take action(s)
 
         if self.L :
-            tmp1 = self.check_L()
-            tmp2 = self.parse_L()
-            tmp3 = self.verify_attribute_ANY()
+            tmp = self.check_L()
+            if tmp : return
+
+            tmp = self.parse_L()
+            if tmp : return
+
+            tmp = self.verify_attribute_ANY()
+            if tmp : return
 
     # ----- methods
 
@@ -635,10 +651,13 @@ L : list (of str)
 
         if self.type == 'integer-attribute' :
             is_fail = self.verify_integer_attribute()
+            if is_fail :  return BAD_RETURN
         elif self.type == 'float-attribute' :
             is_fail = self.verify_float_attribute()
+            if is_fail :  return BAD_RETURN
         elif self.type == 'string-attribute' :
             is_fail = self.verify_string_attribute()
+            if is_fail :  return BAD_RETURN
         else:
             print("** ERROR: should not reach this unknown type err")
             return BAD_RETURN
@@ -690,7 +709,7 @@ L : list (of str)
                 print("** ERROR: when parsing attr: {}".format(self.name))
                 print("   integer-attribute is not int-valued:")
                 print("   {}".format(all_val[ii]))
-            return BAD_RETURN
+                return BAD_RETURN
 
         return 0
 
