@@ -172,18 +172,40 @@ Ndict : dict
     Ndict = copy.deepcopy(lnd.dict_nifti1)
 
     # go through each conversion function
-    is_fail1, datatype, bitpix, scl_slope = \
+    is_fail, datatype, bitpix, scl_slope = \
         calc_nifti_datatype_bitpix_scl_slope(Adict, verb=verb)
-    is_fail2, toffset      = calc_nifti_toffset(Adict, verb=verb)
-    is_fail3, xyzt_units   = calc_nifti_xyzt_units(Adict, verb=verb)
-    is_fail4, dim          = calc_nifti_dim(Adict, verb=verb)
-    is_fail5, qform_code, sform_code = calc_nifti_qsform_code(Adict, verb=verb)
-    is_fail6, srow_x, srow_y, srow_z = calc_nifti_srow_xyz(Adict, verb=verb)
-    is_fail7, quatern_b, quatern_c, quatern_d, \
-              qoffset_x, qoffset_y, qoffset_z, qfac = \
-                  calc_nifti_quatern_and_qoffset(srow_x, srow_y, srow_z, 
-                                                  verb=verb)
-    is_fail8, pixdim       = calc_nifti_pixdim(Adict, qfac, verb=verb)
+    if is_fail :  return BAD_RETURN
+
+    is_fail, toffset = \
+        calc_nifti_toffset(Adict, verb=verb)
+    if is_fail :  return BAD_RETURN
+
+    is_fail, xyzt_units = \
+        calc_nifti_xyzt_units(Adict, verb=verb)
+    if is_fail :  return BAD_RETURN
+
+    is_fail, dim = \
+        calc_nifti_dim(Adict, verb=verb)
+    if is_fail :  return BAD_RETURN
+
+    is_fail, qform_code, sform_code = \
+        calc_nifti_qsform_code(Adict, verb=verb)
+    if is_fail :  return BAD_RETURN
+
+    is_fail, srow_x, srow_y, srow_z = \
+        calc_nifti_srow_xyz(Adict, verb=verb)
+    if is_fail :  return BAD_RETURN
+
+    is_fail, quatern_b, quatern_c, quatern_d, \
+        qoffset_x, qoffset_y, qoffset_z, qfac = \
+            calc_nifti_quatern_and_qoffset(srow_x, srow_y, srow_z, 
+                                           verb=verb)
+    if is_fail :  return BAD_RETURN
+
+    is_fail, pixdim = \
+        calc_nifti_pixdim(Adict, qfac, verb=verb)
+    if is_fail :  return BAD_RETURN
+
     # **** add the remaining ones here
 
     # apply all of those
@@ -372,7 +394,7 @@ scl_slope : float
                                                   verb=verb)
         if is_fail :
             print("** Error: failed to extract array for key " + key)
-            sys.exit(-1)
+            return BAD_RETURN
         Nbtypes = len(btypes)
     else:
         print("** Error: failed to find key:", key)
@@ -477,7 +499,7 @@ toffset : float
                                                    verb=verb)
         if is_fail :
             print("** Error: failed to extract array for key " + key)
-            sys.exit(-1)
+            return BAD_RETURN
 
         # simply get TAXIS_FLOATS[0] value,
         toffset = arr_tfloats[0]
@@ -554,7 +576,7 @@ xyzt_units : int
                                                  verb=verb)
         if is_fail :
             print("** Error: failed to extract array for key " + key)
-            sys.exit(-1)
+            return BAD_RETURN
 
         # decode the short list of possible TAXIS_NUMS[2] values;
         # (doesn't seem worth making a separate function, but we could)
@@ -651,7 +673,7 @@ dim : array of 8 int
                                                 verb=verb)
         if is_fail :
             print("** Error: failed to extract array for key " + key)
-            sys.exit(-1)
+            return BAD_RETURN
 
         # extra check for this array: zeroth element must have value 3
         if arr_rank[0] != 3 :
@@ -672,7 +694,7 @@ dim : array of 8 int
                                                 verb=verb)
         if is_fail :
             print("** Error: failed to extract array for key " + key)
-            sys.exit(-1)
+            return BAD_RETURN
 
     else:
         print("** ERROR: need to parse " + key)
@@ -692,7 +714,7 @@ dim : array of 8 int
                                                 has_time_axis, verb=1)
     if is_fail :
         print("** Error: failed to convert mini-dim arrays to dim")
-        sys.exit(-1)
+        return BAD_RETURN
 
     return 0, dim
 
@@ -824,7 +846,7 @@ sform_code : int
                                                                       verb=verb)
         if is_fail :
             print("** Error: failed to extract data for key " + key)
-            sys.exit(-1)
+            return BAD_RETURN
 
     # this attribute should be present in all dsets, has a short list
     # of mappings to qsform_code values
@@ -838,13 +860,13 @@ sform_code : int
                                                  verb=verb)
         if is_fail :
             print("** Error: failed to extract data for key " + key)
-            sys.exit(-1)
+            return BAD_RETURN
 
         is_fail, qsform_code = translate_scene_data_to_qform_code(arr_sdata, 
                                                                   verb=verb)
         if is_fail :
             print("** Error: failed to convert data for key " + key)
-            sys.exit(-1)
+            return BAD_RETURN
 
     # as a last resort, can try to parse the filename itself, for the
     # '+orig', '+tlrc', etc. part of prefix
@@ -854,7 +876,7 @@ sform_code : int
                                                                  verb=verb)
         if is_fail1 or is_fail2 :
             print("** Error: failed to information for fname " + fname)
-            sys.exit(-2)
+            return BAD_RETURN
 
     else:
         # no information to judge this attribute, which is bad
@@ -1143,7 +1165,7 @@ srow_z :
         translate_aff12_to_srow_xyz(aff12, verb=verb)
 
     if is_fail :
-        sys.exit(-1)
+        return BAD_RETURN
 
     return 0, srow_x, srow_y, srow_z 
 
