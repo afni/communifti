@@ -1266,6 +1266,7 @@ qoffset_z : float
             msg = "** Error: srow lengths must be 4, but "
             msg+= " {} has len = {}".format(name_all[ii], nrow)
             print(msg)
+            return BAD_RETURN
 
     # ----- calc quaternion offsets
 
