@@ -261,6 +261,8 @@ verb : int
                     # grab text from ibot through itop-1, and parse for attr
                     minitext = self.headtext[ibot:itop]
                     attr = HeadAttribute(L=minitext, verb=self.verb)
+                    if attr.is_fail :
+                        return BAD_RETURN
                     self.all_attributes.append(attr)
                     # prepare for finding next attribute
                 ibot = itop
@@ -300,6 +302,8 @@ verb : int
                     return BAD_RETURN
 
                 attr = HeadAttribute(L=M, verb=self.verb)
+                if attr.is_fail :
+                    return BAD_RETURN
                 self.all_attributes.append(attr)
         
         if self.verb :
@@ -519,6 +523,7 @@ L : list (of str)
 
         # general variables
         self.verb            = verb
+        self.is_fail         = 0               # error code to store/exit
 
         # main input
         self.L               = L              
@@ -533,14 +538,14 @@ L : list (of str)
         # ----- take action(s)
 
         if self.L :
-            tmp = self.check_L()
-            if tmp : return
+            self.is_fail = self.check_L()
+            if self.is_fail : return
 
-            tmp = self.parse_L()
-            if tmp : return
+            self.is_fail = self.parse_L()
+            if tmpself.is_fail : return
 
-            tmp = self.verify_attribute_ANY()
-            if tmp : return
+            self.is_fail = self.verify_attribute_ANY()
+            if self.is_fail : return
 
     # ----- methods
 
