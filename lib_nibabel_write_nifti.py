@@ -145,7 +145,8 @@ bnw : BabelNiftiWrite
         ndim = len(self.data_dim)
         if ndim not in [3, 4] :
             msg = "Array does not have 3 or 4 dims, instead it has "
-            msg+= "{} of them: {}".format(ndim, ', '.join(self.data_dim))
+            msg+= "{} of them: ".format(ndim)
+            msg+= "{}".format(', '.join([str(x) for x in self.data_dim]))
             lsu.EP1(msg)
             return BAD_RETURN
 
