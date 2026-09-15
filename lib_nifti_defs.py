@@ -198,6 +198,18 @@ DICT_nifti_bitpix = {         # bit/vox      code
 ALL_nifti_bitpix_keys = list(DICT_nifti_bitpix.keys())
 
 # ============================================================================
+# NIFTI slice timing codes, which are defined here:
+# https://github.com/NIFTI-Imaging/nifti_clib/blob/master/niftilib/nifti1.h
+
+NIFTI_SLICE_UNKNOWN  = 0
+NIFTI_SLICE_SEQ_INC  = 1
+NIFTI_SLICE_SEQ_DEC  = 2
+NIFTI_SLICE_ALT_INC  = 3
+NIFTI_SLICE_ALT_DEC  = 4
+NIFTI_SLICE_ALT_INC2 = 5  # *** CHECK IF AFNI HANDLES THIS
+NIFTI_SLICE_ALT_DEC2 = 6  # *** CHECK IF AFNI HANDLES THIS
+
+# ============================================================================
 
 if __name__ == "__main__" :
 

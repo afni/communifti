@@ -60,11 +60,7 @@ dict_nifti1_unmapped_by_afni = {
 
 # ***** These are unknown for now, due to PT's ignorance. 
 TMP_dict_nifti1_unknown = {
-    'slice_start'     : None,     # short
     'vox_offset'      : None,     # float
-    'slice_end'       : None,     # short
-    'slice_code'      : None,     # char
-    'slice_duration'  : None,     # float
 }
 
 # ============================================================================
@@ -171,7 +167,9 @@ Ndict : dict
     # initialize with empty dictionary
     Ndict = copy.deepcopy(lnd.dict_nifti1)
 
-    # go through each conversion function
+    # go through each conversion function (NB: the order matters in
+    # some cases)
+
     is_fail, datatype, bitpix, scl_slope = \
         calc_nifti_datatype_bitpix_scl_slope(Adict, verb=verb)
     if is_fail :  return BAD_RETURN
@@ -198,35 +196,42 @@ Ndict : dict
 
     is_fail, quatern_b, quatern_c, quatern_d, \
         qoffset_x, qoffset_y, qoffset_z, qfac = \
-            calc_nifti_quatern_and_qoffset(srow_x, srow_y, srow_z, 
-                                           verb=verb)
+            calc_nifti_quatern_and_qoffset(srow_x, srow_y, srow_z, verb=verb)
     if is_fail :  return BAD_RETURN
 
     is_fail, pixdim = \
         calc_nifti_pixdim(Adict, qfac, verb=verb)
     if is_fail :  return BAD_RETURN
 
+    is_fail, slice_start, slice_end, slice_code, slice_duration = \
+        calc_nifti_slice_fields( Adict, dim, verb=verb )
+    if is_fail :  return BAD_RETURN
+
     # **** add the remaining ones here
 
     # apply all of those
-    Ndict['datatype']   = [datatype]
-    Ndict['bitpix']     = [bitpix]
-    Ndict['scl_slope']  = [scl_slope]
-    Ndict['toffset']    = [toffset]
-    Ndict['xyzt_units'] = [xyzt_units]
-    Ndict['dim']        = [int(d) for d in dim]
-    Ndict['qform_code'] = [qform_code]
-    Ndict['sform_code'] = [sform_code]
-    Ndict['srow_x']     = [float(x) for x in srow_x]
-    Ndict['srow_y']     = [float(y) for y in srow_y]
-    Ndict['srow_z']     = [float(z) for z in srow_z]
-    Ndict['quatern_b']  = [quatern_b]
-    Ndict['quatern_c']  = [quatern_c]
-    Ndict['quatern_d']  = [quatern_d]
-    Ndict['qoffset_x']  = [qoffset_x]
-    Ndict['qoffset_y']  = [qoffset_y]
-    Ndict['qoffset_z']  = [qoffset_z]
-    Ndict['pixdim']     = list(pixdim)
+    Ndict['datatype']       = [datatype]
+    Ndict['bitpix']         = [bitpix]
+    Ndict['scl_slope']      = [scl_slope]
+    Ndict['toffset']        = [toffset]
+    Ndict['xyzt_units']     = [xyzt_units]
+    Ndict['dim']            = [int(d) for d in dim]
+    Ndict['qform_code']     = [qform_code]
+    Ndict['sform_code']     = [sform_code]
+    Ndict['srow_x']         = [float(x) for x in srow_x]
+    Ndict['srow_y']         = [float(y) for y in srow_y]
+    Ndict['srow_z']         = [float(z) for z in srow_z]
+    Ndict['quatern_b']      = [quatern_b]
+    Ndict['quatern_c']      = [quatern_c]
+    Ndict['quatern_d']      = [quatern_d]
+    Ndict['qoffset_x']      = [qoffset_x]
+    Ndict['qoffset_y']      = [qoffset_y]
+    Ndict['qoffset_z']      = [qoffset_z]
+    Ndict['pixdim']         = list(pixdim)
+    Ndict['slice_start']    = [slice_start]
+    Ndict['slice_end']      = [slice_end]
+    Ndict['slice_code']     = [slice_code]
+    Ndict['slice_duration'] = [slice_duration]
     # **** add the remaining ones here
 
     # ... and all the unmapped ones
@@ -248,6 +253,7 @@ Ndict : dict
 # + pixdim : float [8]
 
 def calc_nifti_pixdim( Adict, qfac, verb=1 ):
+
     """Given the dictionary of AFNI header attributes Adict calculate what
 the corresponding pixdim would be, that is, what the voxel dimension
 info is. If the dset has a proper time axis (not just being >1 volume,
@@ -1394,6 +1400,428 @@ qfac : float
         float(qoffset_x), float(qoffset_y), float(qoffset_z), \
         qfac
 
+
+# ============================================================================
+# calculate nifti fields: 
+# + slice_start     : short
+# + slice_end       : short
+# + slice_code      : char
+# + slice_duration  : float
+
+def calc_nifti_slice_fields( Adict, dim, min_timing_diff = 0.003, verb=1 ):
+    """Given the dictionary of AFNI header attributes Adict, calculate
+the corresponding NIFTI slice timing fields. Additionally, the number
+of slices, nz, is taken from the already-calculated NIFTI dim array as
+dim[3].
+
+The min_timing_diff is a tolerance value, set to the same default used
+in AFNI's thd_niftiwrite.c, quoting:
+ "slice timing diff, second order (max diff of sorted timing diffs)
+  - greater than 2.5 ms, for Siemens (as noted by D Glen)
+  - might want to allow for more, and/or base on nslices
+  - had been using MYEPSILON = 0.00001, for float precision"
+
+This checks for these AFNI header attributes:
++ TAXIS_NUMS
+  [1] = number of slices with time offsets
+  [2] = units code for the time axis
++ TAXIS_OFFSETS
+  Per-slice acquisition time offsets, when TAXIS_NUMS[1] > 0.
+NB: Some of these are optional, and not having them will greatly simplify
+the calcs here, in fact.
+
+This function mainly follows the slice-timing logic in
+populate_nifti_image() in thd_niftiwrite.c.  Pattern recognition is
+performed by get_slice_timing_pattern(), which is a Python translation
+of the static C function with the same name.
+
+Parameters
+----------
+Adict : dict
+    dictionary of AFNI header attributes; each value is a list
+dim : array-like
+    already-calculated NIFTI dim field; dim[3] is the number of slices
+min_timing_diff : float
+    tolerance for comparing slice timing values and differences
+verb : int
+    verbosity level for messages whilst working
+
+Returns
+-------
+is_fail : int
+    0 on success, nonzero on failure
+slice_start : int
+    first slice index participating in the encoded slice timing pattern;
+    zero if no representable timing pattern is present
+slice_end : int
+    last slice index participating in the encoded slice timing pattern;
+    zero if timing offsets exist but no representable pattern is present
+slice_code : int
+    NIFTI slice timing code (see lib_nifti_defs.py):
+        0 = unknown
+        1 = sequential increasing
+        2 = sequential decreasing
+        3 = alternating increasing
+        4 = alternating decreasing
+        5 = alternating increasing, starting at slice 1
+        6 = alternating decreasing, starting at slice n-2
+slice_duration : float
+    time between successive slice acquisitions, in the temporal units
+    used by the NIFTI header; zero if the timing pattern is unknown
+
+"""
+
+    BAD_RETURN = (-1, 0, 0, 0, 0.0)
+
+    # initialize to NIFTI "unknown/no slice timing" values
+    slice_start    = 0
+    slice_end      = 0
+    slice_code     = lnd.NIFTI_SLICE_UNKNOWN
+    slice_duration = 0.0
+
+    # ----- get number of slices from already-calculated NIFTI dim
+
+    try:
+        nz = int(dim[3])
+    except:
+        print("** ERROR: failed to get nz from NIFTI dim")
+        return BAD_RETURN
+
+    if nz < 1 :
+        print("** ERROR: invalid number of slices:", nz)
+        return BAD_RETURN
+
+    # ----- check for AFNI time axis
+
+    # check for this optional attribute (has exactly 3 int values)
+    key = 'TAXIS_NUMS'
+
+    # no TAXIS_NUMS means no AFNI time axis, hence no slice timing
+    if not(key in Adict.keys()) :
+        return 0, slice_start, slice_end, slice_code, slice_duration
+
+    if verb > 1 :
+        print("++ The value of key '{}' is: {}".format(key, Adict[key]))
+
+    tnums = Adict[key]
+    is_fail, arr_tnums = extract_first_n_int(tnums,
+                                             wall_value=-999,
+                                             min_len=3,
+                                             max_len=3,
+                                             verb=verb)
+    if is_fail :
+        print("** ERROR: failed to extract array for key " + key)
+        return BAD_RETURN
+
+    # AFNI: if (dset->taxis != NULL) {
+    #          nim->slice_duration = 0;
+    #          nim->slice_start = 0;
+    #          nim->slice_end = nim->nz - 1;
+    #       }
+    # Presence of TAXIS_NUMS is the AFNI-header indication used here for
+    # whether a time axis exists.
+    slice_end = nz - 1
+
+    # get number of slices *with time offsets* from the attribute list
+    nsl = int(arr_tnums[1])
+
+    # no slice-dependent timing offsets; retain AFNI's time-axis defaults
+    if nsl == 0 :
+        return 0, slice_start, slice_end, slice_code, slice_duration
+
+    if nsl < 0 :
+        print("** ERROR: invalid number of timed slices:", nsl)
+        return BAD_RETURN
+
+    # AFNI's NIFTI writer indexes the timing array using nim->nz.
+    # For a valid case here, require the two slice counts to agree.
+    if nsl != nz :
+        msg = "** ERROR: mismatch in number of slices:\n"
+        msg+= "   TAXIS_NUMS[1] = {}\n".format(nsl)
+        msg+= "   NIFTI dim[3]  = {}".format(nz)
+        print(msg)
+        return BAD_RETURN
+
+    # ----- get slice timing offsets
+
+    # check for this attribute, which would be _required_ if this part
+    # of the code is reached
+    key = 'TAXIS_OFFSETS'
+    if not(key in Adict.keys()) :
+        print("** ERROR: failed to find key:", key)
+        return BAD_RETURN
+
+    if verb > 1 :
+        print("   The value of key '{}' is: {}".format(key, Adict[key]))
+
+    try:
+        offsets = np.array(Adict[key][:nsl], dtype=float)
+    except:
+        print("** ERROR: failed to parse key:", key)
+        return BAD_RETURN
+
+    if len(offsets) != nsl :
+        msg = "** ERROR: mismatched slice timing length:\n"
+        msg+= "   TAXIS_NUMS[1]       = {}\n".format(nsl)
+        msg+= "   len(TAXIS_OFFSETS) = {}".format(len(offsets))
+        print(msg)
+        return BAD_RETURN
+
+    # --------------------------------------------------------------------
+    # The following follows the slice-timing block of populate_nifti_image()
+    # in thd_niftiwrite.c as directly as is practical in Python.
+    #
+    # This bit assumes that AFNI slice timing offsets are created starting
+    # from zero and including all slices initially.  They may later be
+    # modified by zero padding at either end.  No other modifications are
+    # intentionally accepted right now.
+
+    # ----- Find first and last non-zero element
+
+    sfirst = 0
+    while sfirst < nz :
+        if not(MYFPEQ(offsets[sfirst], 0.0, min_timing_diff)) :
+            break
+        sfirst+= 1
+
+    slast = nz - 1
+    while slast >= sfirst :
+        if not(MYFPEQ(offsets[slast], 0.0, min_timing_diff)) :
+            break
+        slast-= 1
+
+    # pattern check re-written to deal with including zeros
+    # on either end                     14 Jun 2006 [rickr]
+
+    pattern = lnd.NIFTI_SLICE_UNKNOWN
+
+    # do we have all zeros?
+    # In C, the all-zero path ultimately leaves the timing pattern unknown
+    # with zero-valued timing fields.  Test it directly here to avoid any
+    # out-of-range indexing in Python.
+    if sfirst > slast :
+        slice_start    = 0
+        slice_end      = 0
+        slice_code     = lnd.NIFTI_SLICE_UNKNOWN
+        slice_duration = 0.0
+
+    else:  # see if there is a known pattern in the list
+        tlen = slast - sfirst + 2
+
+        # try including leading adjacent zero in the pattern, first
+        if sfirst > 0 :
+            times = offsets[sfirst-1:sfirst-1+tlen]
+            pattern, fsdur = get_slice_timing_pattern(
+                times, min_timing_diff=min_timing_diff, verb=verb)
+            slice_duration = float(fsdur)
+            if pattern != lnd.NIFTI_SLICE_UNKNOWN :
+                sfirst-= 1
+
+        # try including trailing adjacent zero in the pattern, next
+        if pattern == lnd.NIFTI_SLICE_UNKNOWN and slast < nz - 1 :
+            times = offsets[sfirst:sfirst+tlen]
+            pattern, fsdur = get_slice_timing_pattern(
+                times, min_timing_diff=min_timing_diff, verb=verb)
+            slice_duration = float(fsdur)
+            if pattern != lnd.NIFTI_SLICE_UNKNOWN :
+                slast+= 1
+
+        # if no pattern yet, try list without zeros
+        if pattern == lnd.NIFTI_SLICE_UNKNOWN :
+            times = offsets[sfirst:sfirst+tlen-1]
+            pattern, fsdur = get_slice_timing_pattern(
+                times, min_timing_diff=min_timing_diff, verb=verb)
+            slice_duration = float(fsdur)
+
+        if pattern == lnd.NIFTI_SLICE_UNKNOWN :
+            slice_code     = pattern
+            slice_start    = 0
+            slice_end      = 0
+            slice_duration = 0.0
+        else:
+            slice_start = int(sfirst)
+            slice_end   = int(slast)
+            slice_code  = int(pattern)
+
+        if verb > 1 :
+            print("+d timing pattern {}, slice {} to {}, stime {}".format(
+                  pattern, sfirst, slast, slice_duration))
+
+    # AFNI's C block next has a possible adjustment of nim->toffset when
+    # the minimum slice offset is positive.  That is not a slice_* field,
+    # and is therefore intentionally outside this function's interface.
+
+    return 0, slice_start, slice_end, slice_code, float(slice_duration)
+
+
+def get_slice_timing_pattern(times, min_timing_diff = 0.003, verb=1):
+    """A helper function for deciphering slice timing, by detecting
+whether a list of slice offsets matches a NIFTI pattern.
+
+This is a close Python translation of AFNI's static C function
+get_slice_timing_pattern() in thd_niftiwrite.c, which was written by
+Rick Reynolds and has this brief description:
+
+  "given a list of floats, detect any slice timing pattern
+                                                 14 Jun 2006 [rickr]
+
+     - if a pattern is found, return the time delta
+     - return one of:
+         NIFTI_SLICE_UNKNOWN,
+         NIFTI_SLICE_SEQ_INC,  NIFTI_SLICE_SEQ_DEC,
+         NIFTI_SLICE_ALT_INC,  NIFTI_SLICE_ALT_DEC,
+         NIFTI_SLICE_ALT_INC2, NIFTI_SLICE_ALT_DEC2,"
+
+As in the C code, the timing values are sorted while retaining their
+original slice indices.  The sorted values must have a fixed
+difference, and the resulting slice-index order is then compared
+against the six NIFTI slice timing patterns.
+
+Parameters
+----------
+times : array-like of float
+    slice timing offsets to classify
+min_timing_diff : float
+    tolerance used by AFNI when comparing timing differences
+verb : int
+    verbosity level for messages whilst working
+
+Returns
+-------
+pattern : int
+    one of the NIFTI_SLICE_* codes, or NIFTI_SLICE_UNKNOWN
+delta : float
+    absolute timing difference for len(times)==2, matching AFNI;
+    otherwise the fixed difference between sorted timing values when
+    a pattern is recognized; zero for unknown patterns
+
+    """
+
+    # init, in case of early return
+    delta = 0.0
+
+    if times is None :
+        return lnd.NIFTI_SLICE_UNKNOWN, delta
+
+    try:
+        tlist = np.asarray(times, dtype=float)
+        tlen  = len(tlist)
+    except:
+        return lnd.NIFTI_SLICE_UNKNOWN, delta
+
+    if tlen < 2 :
+        return lnd.NIFTI_SLICE_UNKNOWN, delta
+
+    # if the length is very short, deal with it separately
+    if tlen == 2 :
+        delta = abs(float(tlist[1] - tlist[0]))
+        if tlist[1] > tlist[0] :
+            return lnd.NIFTI_SLICE_SEQ_INC, delta
+        else:
+            return lnd.NIFTI_SLICE_SEQ_DEC, delta
+
+    # ----- sort the list, and look for a linear pattern
+
+    # duplicate list; ilist is initialized with current indices
+    # qsort_floatint() in the C code sorts flist while carrying ilist along.
+    flist = np.array(tlist, dtype=float, copy=True)
+    ilist = np.arange(tlen, dtype=int)
+
+    # sort flist, with ilist returning original indices
+    # Use a stable sort so equal values have deterministic index ordering.
+    order = np.argsort(flist, kind='stable')
+    flist = flist[order]
+    ilist = ilist[order]
+
+    # and check for a fixed difference
+    diff    = float(flist[1] - flist[0])
+    pattern = 1
+    for c in range(1, tlen-1) :
+        if not(MYFPEQ(diff, float(flist[c+1] - flist[c]), min_timing_diff)) :
+            pattern = 0
+            break
+
+    # if no pattern, just return failure
+    if not(pattern) :
+        return lnd.NIFTI_SLICE_UNKNOWN, delta
+
+    # we have linear offsets, now see if the slices match a known pattern
+    # repeatedly: init to a pattern, and see if it fails
+
+    # SEQ_INC  (0,1,2,3...,l-1)
+    pattern = lnd.NIFTI_SLICE_SEQ_INC
+    index   = 0
+    for c in range(tlen) :
+        if ilist[c] != index :
+            pattern = lnd.NIFTI_SLICE_UNKNOWN
+            break
+        index+= 1
+
+    if pattern == lnd.NIFTI_SLICE_UNKNOWN :  # (l-1,l-2,...2,1,0)
+        pattern = lnd.NIFTI_SLICE_SEQ_DEC
+        index   = tlen - 1
+        for c in range(tlen) :
+            if ilist[c] != index :
+                pattern = lnd.NIFTI_SLICE_UNKNOWN
+                break
+            index-= 1
+
+    if pattern == lnd.NIFTI_SLICE_UNKNOWN :  # (0,2,4,6,...,1,3,5,...)
+        pattern = lnd.NIFTI_SLICE_ALT_INC
+        index   = 0
+        for c in range(tlen) :
+            if ilist[c] != index :
+                pattern = lnd.NIFTI_SLICE_UNKNOWN
+                break
+            index+= 2
+            if index >= tlen :
+                index = 1                   # so no parity issue
+
+    if pattern == lnd.NIFTI_SLICE_UNKNOWN :  # (l-1,l-3,...1/0,l-2,l-4,...,0/1)
+        pattern = lnd.NIFTI_SLICE_ALT_DEC
+        index   = tlen - 1
+        for c in range(tlen) :
+            if ilist[c] != index :
+                pattern = lnd.NIFTI_SLICE_UNKNOWN
+                break
+            index-= 2
+            if index < 0 :
+                index = tlen - 2
+
+    if pattern == lnd.NIFTI_SLICE_UNKNOWN :  # (1,3,5,...,0,2,4...)
+        pattern = lnd.NIFTI_SLICE_ALT_INC2
+        index   = 1
+        for c in range(tlen) :
+            if ilist[c] != index :
+                pattern = lnd.NIFTI_SLICE_UNKNOWN
+                break
+            index+= 2
+            if index >= tlen :
+                index = 0
+
+    if pattern == lnd.NIFTI_SLICE_UNKNOWN :  # (l-2,l-4,...4,2,0,l-1,...,5,3,1)
+        pattern = lnd.NIFTI_SLICE_ALT_DEC2
+        index   = tlen - 2
+        for c in range(tlen) :
+            if ilist[c] != index :
+                pattern = lnd.NIFTI_SLICE_UNKNOWN
+                break
+            index-= 2
+            if index < 0 :
+                index = tlen - 1
+
+    if pattern != lnd.NIFTI_SLICE_UNKNOWN :
+        delta = diff
+
+    # done, whatever the case may be
+    return int(pattern), float(delta)
+
+
+def MYFPEQ(a, b, eps):
+    """Mini helper function, to see if the difference between a and b
+    is less than the tolerance value, eps; based on the function of
+    the same name in AFNI's thd_niftiwrite.c"""
+    return abs(a - b) < eps
 
 # ============================================================================
 # generic helper functions
