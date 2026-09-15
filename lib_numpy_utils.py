@@ -476,8 +476,9 @@ ytype : str
 
     """
 
-    # NB: in this function we use the .item() method a few times,
-    # because nibabel has made ndim=0 arrays, and that is a good way
+    # NB: for ndim=0 arrays, use .item() to extract the scalar
+    # and convert it to a reasonable/generic Python type.
+    # nibabel has made ndim=0 arrays, and that is a good way
     # to get the value out and also convert it automatically to a
     # reasonable/generic type.
 
@@ -495,16 +496,10 @@ ytype : str
             return None, xtype
 
     # check first if x can be converted to a list
-    try:
-        y = list(x)
+    if x.ndim > 0 :
+        y = x.tolist()
         ytype = lsu.simple_type(y)
-
-        # ... and convert elements to either float or int:
-        z = [ele.item() for ele in y]
-
-        return z, ytype
-    except:
-        pass
+        return y, ytype
 
     y = x.item()
 
