@@ -1,7 +1,8 @@
 # The CommuNifti Library
 
 Libraries of functions for interacting with NIFTI format datasets (Cox
-et al., 2004) from various formats and packages.
+et al., 2004) from various formats and packages in the neuroimaging
+community.
 
 ----------
 
