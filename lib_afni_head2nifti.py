@@ -174,10 +174,6 @@ Ndict : dict
         calc_nifti_datatype_bitpix_scl_slope(Adict, verb=verb)
     if is_fail :  return BAD_RETURN
 
-    is_fail, toffset = \
-        calc_nifti_toffset(Adict, verb=verb)
-    if is_fail :  return BAD_RETURN
-
     is_fail, xyzt_units = \
         calc_nifti_xyzt_units(Adict, verb=verb)
     if is_fail :  return BAD_RETURN
@@ -203,7 +199,7 @@ Ndict : dict
         calc_nifti_pixdim(Adict, qfac, verb=verb)
     if is_fail :  return BAD_RETURN
 
-    is_fail, slice_start, slice_end, slice_code, slice_duration = \
+    is_fail, slice_start, slice_end, slice_code, slice_duration, toffset = \
         calc_nifti_slice_fields( Adict, dim, verb=verb )
     if is_fail :  return BAD_RETURN
 
@@ -213,7 +209,6 @@ Ndict : dict
     Ndict['datatype']       = [datatype]
     Ndict['bitpix']         = [bitpix]
     Ndict['scl_slope']      = [scl_slope]
-    Ndict['toffset']        = [toffset]
     Ndict['xyzt_units']     = [xyzt_units]
     Ndict['dim']            = [int(d) for d in dim]
     Ndict['qform_code']     = [qform_code]
@@ -232,6 +227,7 @@ Ndict : dict
     Ndict['slice_end']      = [slice_end]
     Ndict['slice_code']     = [slice_code]
     Ndict['slice_duration'] = [slice_duration]
+    Ndict['toffset']        = [toffset]
     # **** add the remaining ones here
 
     # ... and all the unmapped ones
@@ -458,63 +454,6 @@ scl_slope : float
         scl_slope = np.nan
 
     return 0, datatype, bitpix, scl_slope
-
-# ============================================================================
-# calculate nifti fields: 
-# + toffset : float
-
-def calc_nifti_toffset( Adict, verb=1 ):
-    """Given the dictionary of AFNI header attributes Adict calculate what
-the corresponding time offset would be, that is, a nonzero start point
-for the time axis.
-
-For datasets without a time axis, it will be 0.0.  For datasets
-created with to3d, it will likely also be 0.0.
-
-This checks for these AFNI header attributes:
-+ TAXIS_FLOATS (might not exist, if dset does not have time, like if 3D
-  or just a 'bucket')
-  [0] Time origin (in units given by TAXIS_NUMS[2]).
-
-Parameters
-----------
-Adict : dict
-    dictionary of AFNI header attributes; each value is a list
-verb : int
-    verbosity level for messages whilst working
-
-Returns
--------
-is_fail : int
-    0 on success, nonzero on failure
-toffset : float
-    value of temporal offset
-
-    """
-
-    BAD_RETURN = (-1, 0.0)
-
-    # initialize default
-    toffset = 0.0
-
-    # check for time floats, and parse if it exists
-    key = 'TAXIS_FLOATS'
-    if key in Adict.keys() :
-        if verb > 1 :
-            print("   The value of key '{}' is: {}".format(key, Adict[key]))
-        tfloats = Adict[key]
-        is_fail, arr_tfloats = extract_first_n_int(tfloats, wall_value=-999999,
-                                                   min_len=5, max_len=5,
-                                                   verb=verb)
-        if is_fail :
-            print("** Error: failed to extract array for key " + key)
-            return BAD_RETURN
-
-        # simply get TAXIS_FLOATS[0] value,
-        toffset = arr_tfloats[0]
-    # else: there isn't a time axis, which is OK.
-
-    return 0, toffset
 
 # ============================================================================
 # calculate nifti fields: 
@@ -1407,6 +1346,7 @@ qfac : float
 # + slice_end       : short
 # + slice_code      : char
 # + slice_duration  : float
+# + toffset         : float
 
 def calc_nifti_slice_fields( Adict, dim, min_timing_diff = 0.003, verb=1 ):
     """Given the dictionary of AFNI header attributes Adict, calculate
@@ -1468,17 +1408,20 @@ slice_code : int
 slice_duration : float
     time between successive slice acquisitions, in the temporal units
     used by the NIFTI header; zero if the timing pattern is unknown
+toffset : float
+    value of temporal offset
 
 """
 
-    BAD_RETURN = (-1, 0, 0, 0, 0.0)
+    BAD_RETURN = (-1, 0, 0, 0, 0.0, 0.0)
 
     # initialize to NIFTI "unknown/no slice timing" values
     slice_start    = 0
     slice_end      = 0
     slice_code     = lnd.NIFTI_SLICE_UNKNOWN
     slice_duration = 0.0
-
+    toffset        = 0.0
+    
     # ----- get number of slices from already-calculated NIFTI dim
 
     try:
@@ -1498,7 +1441,7 @@ slice_duration : float
 
     # no TAXIS_NUMS means no AFNI time axis, hence no slice timing
     if not(key in Adict.keys()) :
-        return 0, slice_start, slice_end, slice_code, slice_duration
+        return 0, slice_start, slice_end, slice_code, slice_duration, toffset
 
     if verb > 1 :
         print("++ The value of key '{}' is: {}".format(key, Adict[key]))
@@ -1511,6 +1454,12 @@ slice_duration : float
                                              verb=verb)
     if is_fail :
         print("** ERROR: failed to extract array for key " + key)
+        return BAD_RETURN
+
+    # check about calculating nonzero toffset (since TAXIS_NUMS exists)
+    is_fail, toffset = translate_taxis_to_toffset( Adict, verb=verb )
+    if is_fail : 
+        print("** ERROR: failure to calculate toffset:", toffset)
         return BAD_RETURN
 
     # AFNI: if (dset->taxis != NULL) {
@@ -1527,7 +1476,7 @@ slice_duration : float
 
     # no slice-dependent timing offsets; retain AFNI's time-axis defaults
     if nsl == 0 :
-        return 0, slice_start, slice_end, slice_code, slice_duration
+        return 0, slice_start, slice_end, slice_code, slice_duration, toffset
 
     if nsl < 0 :
         print("** ERROR: invalid number of timed slices:", nsl)
@@ -1555,7 +1504,7 @@ slice_duration : float
         print("   The value of key '{}' is: {}".format(key, Adict[key]))
 
     try:
-        offsets = np.array(Adict[key][:nsl], dtype=float)
+        offsets = np.array(Adict[key][:nsl], dtype=float) # tlist, in AFNI
     except:
         print("** ERROR: failed to parse key:", key)
         return BAD_RETURN
@@ -1647,12 +1596,77 @@ slice_duration : float
             print("+d timing pattern {}, slice {} to {}, stime {}".format(
                   pattern, sfirst, slast, slice_duration))
 
-    # AFNI's C block next has a possible adjustment of nim->toffset when
-    # the minimum slice offset is positive.  That is not a slice_* field,
-    # and is therefore intentionally outside this function's interface.
+    # Follow AFNI C code for possible adjustment of toffset when the
+    # minimum slice offset is positive.
+    if toffset == 0.0 and slice_code != lnd.NIFTI_SLICE_UNKNOWN :
+        tmin = offsets[0]
+        for ii in range(1, nz):
+            if offsets[ii] < tmin :
+                tmin = offsets[ii]
+        if tmin > 0.0 :
+            toffset = tmin
 
-    return 0, slice_start, slice_end, slice_code, float(slice_duration)
+    return 0, slice_start, slice_end, slice_code, \
+        float(slice_duration), toffset
 
+def translate_taxis_to_toffset( Adict, verb=1 ):
+    """Given the dictionary of AFNI header attributes Adict calculate what
+the corresponding time offset would be, that is, a nonzero start point
+for the time axis.
+
+For datasets without a time axis, it will be 0.0.  For datasets
+created with to3d, it will likely also be 0.0.
+
+This checks for these AFNI header attributes:
++ TAXIS_FLOATS (might not exist, if dset does not have time, like if 3D
+  or just a 'bucket')
+  [0] Time origin (in units given by TAXIS_NUMS[2]).
+
+NB: initially, this was its own calc*toffset() function, but then we
+noticed in the AFNI code that during the slice_* field calculations,
+that toffset can get refined.  So now this is a subset of that larger
+set of calcs, for consistency (and maybe even accuracy).
+
+Parameters
+----------
+Adict : dict
+    dictionary of AFNI header attributes; each value is a list
+verb : int
+    verbosity level for messages whilst working
+
+Returns
+-------
+is_fail : int
+    0 on success, nonzero on failure
+toffset : float
+    value of temporal offset
+
+    """
+
+    BAD_RETURN = (-1, 0.0)
+
+    # initialize default
+    toffset = 0.0
+
+    # check for time floats, and parse if it exists
+    key = 'TAXIS_FLOATS'
+    if key in Adict.keys() :
+        if verb > 1 :
+            print("   The value of key '{}' is: {}".format(key, Adict[key]))
+        tfloats = Adict[key]
+        is_fail, arr_tfloats = extract_first_n_int(tfloats, 
+                                                   wall_value=-999999,
+                                                   min_len=5, max_len=5,
+                                                   verb=verb)
+        if is_fail :
+            print("** Error: failed to extract array for key " + key)
+            return BAD_RETURN
+
+        # simply get TAXIS_FLOATS[0] value,
+        toffset = arr_tfloats[0]
+    # else: there isn't a time axis, which is OK.
+
+    return 0, toffset
 
 def get_slice_timing_pattern(times, min_timing_diff = 0.003, verb=1):
     """A helper function for deciphering slice timing, by detecting
