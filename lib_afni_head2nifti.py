@@ -48,7 +48,6 @@ dict_nifti1_unmapped_by_afni = {
     'cal_min'         : 0.0,      ## float
     'descrip'         : b'',      ## char [80]
     'aux_file'        : b'',      ## char [24]
-    'dim_info'        : 0,        ## char        # typically 0,1,2,3?
     'intent_name'     : b'',      ## char [16]
     'intent_p1'       : 0.0,      ## float
     'intent_p2'       : 0.0,      ## float
@@ -203,6 +202,10 @@ Ndict : dict
         calc_nifti_slice_fields( Adict, dim, verb=verb )
     if is_fail :  return BAD_RETURN
 
+    is_fail, dim_info = \
+        calc_nifti_dim_info(Adict, verb=verb)
+    if is_fail :  return BAD_RETURN
+
     # **** add the remaining ones here
 
     # apply all of those
@@ -228,6 +231,7 @@ Ndict : dict
     Ndict['slice_code']     = [slice_code]
     Ndict['slice_duration'] = [slice_duration]
     Ndict['toffset']        = [toffset]
+    Ndict['dim_info']       = [dim_info]
     # **** add the remaining ones here
 
     # ... and all the unmapped ones
@@ -243,6 +247,68 @@ Ndict : dict
         Ndict[key] = [TMP_dict_nifti1_unknown[key]]
 
     return 0, Ndict
+
+# ============================================================================
+# calculate nifti fields: 
+# + dim_info : char
+
+def calc_nifti_dim_info(Adict, verb=1):
+    """****
+
+This checks for these AFNI header attributes:
++ TAXIS_NUMS (might not exist, if dset does not have time, like if 3D)
+
+This function follows rules from AFNI's thd_niftiwrite.c, where
+freq_dim, phase_dim and slice_dim are calculated (which eventually go
+into encoding the NIFTI field, dim_info).
+
+Parameters
+----------
+Adict : dict
+    dictionary of AFNI header attributes; each value is a list
+verb : int
+    verbosity level for messages whilst working
+
+Returns
+-------
+is_fail : int
+    0 on success, nonzero on failure
+dim_info : int
+    encode frequency, phase, and slice dimension identifiers
+
+    """
+
+    BAD_RETURN = (-1, 0)
+
+    # initialize these
+    freq_dim  = 0
+    phase_dim = 0
+
+    # check if this attribute exists, and is readable
+    key = 'TAXIS_NUMS'
+    if key in Adict.keys() :
+        if verb > 1 :
+            print("   The value of key '{}' is: {}".format(key, Adict[key]))
+
+        # and just by TAXIS_NUMS existing, this quantity is determined
+        slice_dim = 3
+    else:
+        # ... simply the case of no TAXIS_NUMS attribute being present
+        slice_dim = 0
+
+    # follow the NIFTI recipe/formulation
+    dim_info = FPS_INTO_DIM_INFO(freq_dim, phase_dim, slice_dim)
+
+    return 0, dim_info
+
+def FPS_INTO_DIM_INFO(freq_dim, phase_dim, slice_dim):
+    """A helper function directly in the nifti1.h file."""
+
+    dim_info = ((freq_dim  & 0x03)      |
+                ((phase_dim & 0x03) << 2) |
+                ((slice_dim & 0x03) << 4))
+
+    return dim_info
 
 # ============================================================================
 # calculate nifti fields: 
