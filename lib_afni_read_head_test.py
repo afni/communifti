@@ -213,6 +213,9 @@ is_fail : int
     prefix_full = os.path.expanduser(prefix)
 
     x = LARH.HeadFile(inset_full)
+    if x.is_fail : 
+        return BAD_RETURN
+
     is_fail = x.write_report(prefix_full)
     
     return is_fail
