@@ -633,7 +633,14 @@ L : list (of str)
             if is_fail :
                 return BAD_RETURN
             elif is_something :
-                self.count = int(something_val)
+                try:
+                    self.count = int(something_val)
+                except:
+                    msg = "** ERROR: invalid count value: "
+                    msg+= "{}".format(something_val)
+                    print(msg)
+                    return BAD_RETURN
+
                 i0 = ii + 1
                 break
 
