@@ -270,6 +270,8 @@ verb : int
         # get final attribute
         minitext = self.headtext[ibot:itop]
         attr = HeadAttribute(L=minitext, verb=self.verb)
+        if attr.is_fail :
+            return BAD_RETURN
         self.all_attributes.append(attr)
         
         if self.verb :
@@ -546,7 +548,7 @@ L : list (of str)
             if self.is_fail : return
 
             self.is_fail = self.parse_L()
-            if tmpself.is_fail : return
+            if self.is_fail : return
 
             self.is_fail = self.verify_attribute_ANY()
             if self.is_fail : return
