@@ -69,6 +69,7 @@ bnw : BabelNiftiWrite
 
         # general variables
         self.verb            = verb
+        self.is_fail         = 0               # can hold error code on exit
         self.do_log          = do_log
 
         # main data variables
@@ -94,25 +95,25 @@ bnw : BabelNiftiWrite
 
         # ------ take action
 
-        tmp = self.basic_setup()
-        if tmp : return
+        self.is_fail = self.basic_setup()
+        if self.is_fail : return
 
-        tmp = self.copy_hdr()
-        if tmp : return
+        self.is_fail = self.copy_hdr()
+        if self.is_fail : return
 
-        tmp = self.check_consistency_all()
-        if tmp : return
+        self.is_fail = self.check_consistency_all()
+        if self.is_fail : return
 
-        tmp = self.set_data_dtype_hdr_datatype()
-        if tmp : return
+        self.is_fail = self.set_data_dtype_hdr_datatype()
+        if self.is_fail : return
 
-        tmp = self.set_hdr_nv()
-        if tmp : return
+        self.is_fail = self.set_hdr_nv()
+        if self.is_fail : return
 
         # ***** add in removing extensions by default ****
 
-        tmp = self.write_dset()
-        if tmp : return
+        self.is_fail = self.write_dset()
+        if self.is_fail : return
 
 
     # ------ methods
