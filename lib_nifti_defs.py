@@ -67,6 +67,12 @@ dict_nifti1 = {
     'intent_name'     : None,     # char [16]
     'magic'           : None,     # char [4]
 }
+### Notes:
+# + The default value for vox_offset in a .nii file is 352, but adding
+#   one or more extensions will change this.
+# + The NIfTI-1.1 header struct is 348 bytes long.  See this discussion
+#   about adding extension(s), and using ecode and esize:
+#   http://nifti.nimh.nih.gov/nifti-1/documentation/faq#Q21
 
 ALL_nifti1_keys = list(dict_nifti1.keys())
 
@@ -228,7 +234,7 @@ DICT_nifti_ecode = {
     "NIFTI_ECODE_MRS"                   : 44,  # MRS extension 
 }
 
-# Further ecode notes from the NIFTI C code:
+### Notes about ecodes from the NIFTI C code:
 # + "NIFTI_MAX_ECODE" : 44,  # ****** maximum extension code ******
 # + 36 is currently unassigned, waiting on NIFTI_ECODE_AGILENT_PROCPAR 
 
