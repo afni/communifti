@@ -258,9 +258,13 @@ Ndict : dict
         is_fail, nimldict = LANH.nimlize_afni_adict(Adict, Ndict, verb=verb)
         if is_fail :  return BAD_RETURN
 
-        # add as a list: key for the AFNI ext code; nimldict itself
-        Ndict['ext'] = ["NIFTI_ECODE_AFNI", nimldict]
-
+        # add as a dict (AFNI ext name; nimldict itself) within a list
+        Ndict['ext'] = [
+            {
+                'ecode_name' : 'NIFTI_ECODE_AFNI',
+                'data'       : nimldict,
+            }
+        ]
 
     return 0, Ndict
 
