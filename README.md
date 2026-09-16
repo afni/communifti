@@ -19,12 +19,12 @@ able to compare results with the expected answer. These are primarily
 to be used just for development, rather than applications.
 
 Libraries of mapping functions (no AFNI install needed):  
-  lib_afni_read_head.py  : read AFNI HEAD file attributes 
-  lib_afni_head2nifti.py : map AFNI HEAD file attributes to NIFTI fields
+- `lib_afni_read_head.py`  : read AFNI HEAD file attributes  
+- `lib_afni_head2nifti.py` : map AFNI HEAD file attributes to NIFTI fields
 
-Libraries of testing functions (AFNI install needed):  
-  lib_afni_read_head_test.py  : reading of AFNI HEAD file attributes
-  lib_afni_head2nifti_test.py : test attribute-field mapping
+Libraries of testing functions (AFNI install needed):
+- `lib_afni_read_head_test.py`  : reading of AFNI HEAD file attributes  
+- `lib_afni_head2nifti_test.py` : test attribute-field mapping
 
 ----------
 
@@ -37,8 +37,8 @@ present, these functions make use of Nibabel (Brett et al.,
 and checking for consistency/updates in the final output volumes.
 
 Libraries of reading/writing functions (Nibabel install needed):  
-  lib_nibabel_read_nifti.py   : read NIFTI into Nibabel object
-  lib_nibabel_write_nifti.py  : write NIFTI dset to disk from Nibabel object
+- `lib_nibabel_read_nifti.py`   : read NIFTI into Nibabel object  
+- `lib_nibabel_write_nifti.py`  : write NIFTI dset to disk from Nibabel object
 
 -----------
 
@@ -51,9 +51,9 @@ header information from the main C code libraries is also
 included.  Finally, there are some convenience tools for working
 
 Libraries of supplemental functions/objects
-  lib_nifti_defs.py   : information about NIFTI headers
-  lib_numpy_utils.py  : convenient tools for navigating array and data types
-  lib_simple_utils.py : convenient functions for printing and more
+- `lib_nifti_defs.py`   : information about NIFTI headers
+- `lib_numpy_utils.py`  : convenient tools for navigating array and data types
+- `lib_simple_utils.py` : convenient functions for printing and more
 
 -----------
 
