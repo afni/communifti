@@ -198,16 +198,39 @@ DICT_nifti_bitpix = {         # bit/vox      code
 ALL_nifti_bitpix_keys = list(DICT_nifti_bitpix.keys())
 
 # ============================================================================
-# NIFTI slice timing codes, which are defined here:
-# https://github.com/NIFTI-Imaging/nifti_clib/blob/master/niftilib/nifti1.h
+# NIFTI extension codes, which are defined here:
+# https://github.com/NIFTI-Imaging/nifti_clib/blob/master/niftilib/nifti1_io.h
+# and see http://nifti.nimh.nih.gov/nifti-1/documentation/faq#Q21
 
-NIFTI_SLICE_UNKNOWN  = 0
-NIFTI_SLICE_SEQ_INC  = 1
-NIFTI_SLICE_SEQ_DEC  = 2
-NIFTI_SLICE_ALT_INC  = 3
-NIFTI_SLICE_ALT_DEC  = 4
-NIFTI_SLICE_ALT_INC2 = 5  # *** CHECK IF AFNI HANDLES THIS
-NIFTI_SLICE_ALT_DEC2 = 6  # *** CHECK IF AFNI HANDLES THIS
+# NIfTI-1.1 extension codes
+DICT_nifti_ecode = {
+    "NIFTI_ECODE_IGNORE"                :  0,  # formerly UNKNOWN
+    "NIFTI_ECODE_DICOM"                 :  2,  # raw DICOM attributes  
+    "NIFTI_ECODE_AFNI"                  :  4,  # AFNI
+    "NIFTI_ECODE_COMMENT"               :  6,  # plain ASCII text only              
+    "NIFTI_ECODE_XCEDE"                 :  8,  # Xcede
+    "NIFTI_ECODE_JIMDIMINFO"            : 10,  # 
+    "NIFTI_ECODE_WORKFLOW_FWDS"         : 12,  # workflow-based approaches
+    "NIFTI_ECODE_FREESURFER"            : 14,  # FreeSurfer
+    "NIFTI_ECODE_PYPICKLE"              : 16,  # embedded Python objs, pynifti
+    "NIFTI_ECODE_MIND_IDENT"            : 18,  # LONI MiND code
+    "NIFTI_ECODE_B_VALUE"               : 20,  # LONI MiND code
+    "NIFTI_ECODE_SPHERICAL_DIRECTION"   : 22,  # LONI MiND code
+    "NIFTI_ECODE_DT_COMPONENT"          : 24,  # LONI MiND code
+    "NIFTI_ECODE_SHC_DEGREEORDER"       : 26,  # LONI MiND code
+    "NIFTI_ECODE_VOXBO"                 : 28,  # Voxbo
+    "NIFTI_ECODE_CARET"                 : 30,  # Caret/Wustl
+    "NIFTI_ECODE_CIFTI"                 : 32,  # CIFTI-2
+    "NIFTI_ECODE_VARIABLE_FRAME_TIMING" : 34, 
+    "NIFTI_ECODE_EVAL"                  : 38,  # Munster U. Hospital 
+    "NIFTI_ECODE_MATLAB"                : 40,  # MATLAB extension 
+    "NIFTI_ECODE_QUANTIPHYSE"           : 42,  # Quantiphyse extension 
+    "NIFTI_ECODE_MRS"                   : 44,  # MRS extension 
+}
+
+# Further ecode notes from the NIFTI C code:
+# + "NIFTI_MAX_ECODE" : 44,  # ****** maximum extension code ******
+# + 36 is currently unassigned, waiting on NIFTI_ECODE_AGILENT_PROCPAR 
 
 # ============================================================================
 
