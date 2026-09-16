@@ -262,7 +262,7 @@ Ndict : dict
         Ndict['ext'] = [
             {
                 'ecode_name' : 'NIFTI_ECODE_AFNI',
-                'data'       : nimldict,
+                'content'    : nimldict,
             }
         ]
 
