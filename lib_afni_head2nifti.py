@@ -253,16 +253,23 @@ Ndict : dict
     for key in TMP_dict_nifti1_unknown.keys():
         Ndict[key] = [TMP_dict_nifti1_unknown[key]]
 
-    # ... and afni extension, which is in the form of a nimldict
-    if do_afni_ext : 
-        is_fail, nimldict = LANH.nimlize_afni_adict(Adict, Ndict, verb=verb)
+    # ... and afni extension
+    if do_afni_ext :
+        # Create the NIML extension by first getting the dictionary...
+        is_fail, niml_dict = LANH.nimlize_afni_adict(Adict, Ndict, verb=verb)
+        if is_fail :  return BAD_RETURN
+        # ... from which the text format is created
+        is_fail, niml_text = LANH.serialize_niml_dict(niml_dict, verb=verb)
         if is_fail :  return BAD_RETURN
 
-        # add as a dict (AFNI ext name; nimldict itself) within a list
+        # also get NIFTI ext code
+        ecode = lnd.DICT_nifti_ecode['NIFTI_ECODE_AFNI']
+
+        # add as a dict (AFNI ext name; NIML text itself) within a list
         Ndict['ext'] = [
             {
-                'ecode_name' : 'NIFTI_ECODE_AFNI',
-                'content'    : nimldict,
+                'ecode'   : ecode,
+                'content' : niml_text,
             }
         ]
 

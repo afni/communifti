@@ -63,7 +63,7 @@ Returns
 -------
 is_fail : int
     0 on success, nonzero on failure
-nimldict : dict
+niml_dict : dict
     dictionary of NIML-format header attributes
 
     """
@@ -83,14 +83,14 @@ nimldict : dict
     if is_fail:
         return BAD_RETURN
 
-    nimldict = {
+    niml_dict = {
         'name'        : 'AFNI_attributes',
         'self_idcode' : self_idcode,
         'NIfTI_nums'  : str_nifti_nums,
         'elements'    : [],
     }
 
-    # ----- fill nimldict['elements'] with all (utilized) AFNI attributes
+    # ----- fill niml_dict['elements'] with all (utilized) AFNI attributes
 
     for aname, avals in Adict.items():
 
@@ -105,11 +105,11 @@ nimldict : dict
         if is_fail :
             return BAD_RETURN
 
-        # ... and attach the NIML element to the main nimldict
-        nimldict['elements'].append(dict_elem)
+        # ... and attach the NIML element to the main niml_dict
+        niml_dict['elements'].append(dict_elem)
 
 
-    return 0, nimldict
+    return 0, niml_dict
 
 # ---------------------
 
@@ -385,10 +385,10 @@ astr : str
 
 # ============================================================================
 
-def serialize_nimldict(nimldict, verb=1):
+def serialize_niml_dict(niml_dict, verb=1):
     """Serialize an AFNI NIML dictionary into NIML/XML text.
 
-    The input nimldict is expected to have the structure produced by
+    The input niml_dict is expected to have the structure produced by
     nimlize_afni_adict():
 
         {
@@ -412,7 +412,7 @@ def serialize_nimldict(nimldict, verb=1):
 
     Parameters
     ----------
-    nimldict : dict
+    niml_dict : dict
         Dictionary representation of the AFNI NIML extension.
     verb : int
         Verbosity level.
@@ -431,8 +431,8 @@ def serialize_nimldict(nimldict, verb=1):
     # ------------------------------------------------------------
     # verify group-level input
 
-    if not isinstance(nimldict, dict):
-        print("** ERROR: nimldict must be a dictionary")
+    if not isinstance(niml_dict, dict):
+        print("** ERROR: niml_dict must be a dictionary")
         return BAD_RETURN
 
     required = [
@@ -443,18 +443,18 @@ def serialize_nimldict(nimldict, verb=1):
     ]
 
     for key in required:
-        if key not in nimldict:
-            print("** ERROR: missing nimldict key:", key)
+        if key not in niml_dict:
+            print("** ERROR: missing niml_dict key:", key)
             return BAD_RETURN
 
-    gname = nimldict['name']
+    gname = niml_dict['name']
 
     if gname != 'AFNI_attributes':
         print("** ERROR: unexpected NIML group name:", gname)
         return BAD_RETURN
 
-    if not isinstance(nimldict['elements'], list):
-        print("** ERROR: nimldict['elements'] must be a list")
+    if not isinstance(niml_dict['elements'], list):
+        print("** ERROR: niml_dict['elements'] must be a list")
         return BAD_RETURN
 
     # ------------------------------------------------------------
@@ -467,13 +467,13 @@ def serialize_nimldict(nimldict, verb=1):
 
     L.append(
         '  self_idcode="{}"'.format(
-            niml_escape(nimldict['self_idcode'])
+            niml_escape(niml_dict['self_idcode'])
         )
     )
 
     L.append(
         '  NIfTI_nums="{}"'.format(
-            niml_escape(nimldict['NIfTI_nums'])
+            niml_escape(niml_dict['NIfTI_nums'])
         )
     )
 
@@ -482,7 +482,7 @@ def serialize_nimldict(nimldict, verb=1):
     # ------------------------------------------------------------
     # individual AFNI attributes
 
-    for elem in nimldict['elements']:
+    for elem in niml_dict['elements']:
 
         is_fail, estr = serialize_element(elem)
         if is_fail:
@@ -500,7 +500,7 @@ def serialize_nimldict(nimldict, verb=1):
 
     if verb > 2:
         print("++ Serialized AFNI NIML extension:")
-        print("   nelem  : {}".format(len(nimldict['elements'])))
+        print("   nelem  : {}".format(len(niml_dict['elements'])))
         print("   nchar  : {}".format(len(niml_text)))
 
     return 0, niml_text
