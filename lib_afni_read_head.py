@@ -492,10 +492,13 @@ B : list (of str)
                 vvv = vvv[:-len(ssep)]
             www = vvv.split(ssep)
 
-            # special case, of wanting to split at ';', too
+            # special case, of wanting to split at ';', too (this style
+            # of splitting allows for no loss of information)
             if name == 'BRICK_STATSYM' :
-                # add the '[0]' to not get a list of lists
-                www = [w.split(';') for w in www][0]
+                bstatsym = []
+                for w in www :
+                    bstatsym.extend(w.split(';'))
+                www = bstatsym
             B.extend(www)
         else:
             B.append(val)
