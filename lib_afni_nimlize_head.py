@@ -17,8 +17,8 @@ import os, sys, copy
 # dset NIML extension
 
 # List of dataset attributes NOT to save in a NIfTI-1.1 file (see
-# thd_nifti_write.c -> static char *badlist[])
-LIST_afni_attr_remove_nifti_ext = [
+# thd_niftiwrite.c -> static char *badlist[])
+LIST_afni_attr_badlist = [
     'IDCODE_STRING',
     'DATASET_RANK',
     'DATASET_DIMENSIONS',
@@ -41,7 +41,7 @@ LIST_afni_attr_remove_nifti_ext = [
 
 # ============================================================================
 
-def nimlize_afni_adict(Adict, Ndict, use_removelist=True, verb=1):
+def nimlize_afni_adict(Adict, Ndict, remove_badlist=True, verb=1):
     """
 
 Parameters
@@ -50,7 +50,7 @@ Adict : dict
     dictionary of AFNI header attributes; each value is a list
 Ndict : dict
     dictionary of NIFTI header attributes
-use_remove_list : bool
+remove_badlist : bool
     follow the AFNI C code and remove some AFNI attr from the NIFTI 
     NIML ext here
 verb : int
@@ -93,7 +93,7 @@ nimldict : dict
 
 
         # skip over some AFNI HEAD attributes, like main C code does
-        if use_removelist and aname in LIST_afni_attr_remove_nifti_ext :
+        if remove_badlist and aname in LIST_afni_attr_badlist :
             continue
 
         # process the attribute -> NIML dictionary element
@@ -325,7 +325,7 @@ dict_elem : dict
 def repack_string_attribute(name, avals, verb=1):
     """Reconstruct the AFNI internal string value from an Adict string list.
 
-By default, each str element of alist is joined with '\0'. Note that
+By default, each str element of avals is joined with '\0'. Note that
 BRICK_STATSYM is treated specially, to rejoin the list elements with:
 ';'.
 
@@ -349,6 +349,10 @@ astr : str
     """
 
     BAD_RETURN = (-1, '')
+
+    if not isinstance(avals, list):
+        print("** ERROR: non-list entered for avals to repack:", avals)
+        return BAD_RETURN
 
     try:
         for val in avals:
