@@ -59,11 +59,6 @@ dict_nifti1_unmapped_by_afni = {
     'magic'           : b'n+1',   ## char [4]
 }
 
-# ***** These are unknown for now, due to PT's ignorance. 
-TMP_dict_nifti1_unknown = {
-    'vox_offset'      : None,     # float
-}
-
 # ============================================================================
 # AFNI header: useful dictionaries, lists and strings
 
@@ -211,8 +206,7 @@ Ndict : dict
         calc_nifti_dim_info(Adict, verb=verb)
     if is_fail :  return BAD_RETURN
 
-    # **** add the remaining ones here
-
+    # ------ save the calculated set
 
     # apply all of those
     Ndict['datatype']       = [datatype]
@@ -238,6 +232,10 @@ Ndict : dict
     Ndict['slice_duration'] = [slice_duration]
     Ndict['toffset']        = [toffset]
     Ndict['dim_info']       = [dim_info]
+    # ... and this is a special one, the NIFTI1 default if no ext is
+    # added; below, one gets added by default, and this would be
+    # recalculated later, then
+    Ndict['vox_offset']     = [352.0]
 
     # **** add any remaining ones here
 
@@ -250,11 +248,9 @@ Ndict : dict
     for key in lnd.ALL_nifti1_unused_keys:
         Ndict[key] = [lnd.dict_nifti1_unused[key]]
 
-    # ... and all the unknown ones ***will be mapped at some point****
-    for key in TMP_dict_nifti1_unknown.keys():
-        Ndict[key] = [TMP_dict_nifti1_unknown[key]]
+    # ----- now that the main NIFTI fields have been populated 
 
-    # ... and afni extension
+    # ... and afni extension (which would affect vox_offset downstream
     if do_afni_ext :
         # Create the NIML ext content by first getting the dictionary...
         is_fail, niml_dict = LANH.nimlize_afni_adict(Adict, Ndict, verb=verb)
