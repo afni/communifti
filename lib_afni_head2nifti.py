@@ -256,7 +256,7 @@ Ndict : dict
 
     # ... and afni extension
     if do_afni_ext :
-        # Create the NIML extension by first getting the dictionary...
+        # Create the NIML ext content by first getting the dictionary...
         is_fail, niml_dict = LANH.nimlize_afni_adict(Adict, Ndict, verb=verb)
         if is_fail :  return BAD_RETURN
 
@@ -270,6 +270,7 @@ Ndict : dict
             LNE.pack_nifti_extension_content(
                 niml_text, add_nul=True, verb=verb
             )
+        if is_fail :  return BAD_RETURN
 
         # also get NIFTI ext code
         ecode = lnd.DICT_nifti_ecode['NIFTI_ECODE_AFNI']
