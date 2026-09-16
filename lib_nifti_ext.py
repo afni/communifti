@@ -28,13 +28,15 @@ import struct
 def pack_nifti_extension_content(content, add_nul=False,
                                  encoding='utf-8', verb=1):
     """Pack content according to NIFTI extension size/alignment rules.
-For example, the output ext_content is utf-8 encoded and padded to be
-a multiple of 16 bits.
 
-This function also outputs the requisize esize value (total extension
+If content is a str, it is encoded using the specified encoding.
+The content is then padded so that the total extension size (esize),
+including the 8-byte esize/ecode header, is a multiple of 16 bytes.
+
+This function also outputs the requisite esize value (total extension
 size) for the packed content.
 
-For AFNI extensions, one should use: add_nul = True .
+For AFNI extensions, one should use: add_nul=True .
 
 Parameters
 ----------
