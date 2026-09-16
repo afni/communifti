@@ -204,6 +204,19 @@ DICT_nifti_bitpix = {         # bit/vox      code
 ALL_nifti_bitpix_keys = list(DICT_nifti_bitpix.keys())
 
 # ============================================================================
+# NIFTI slice codes (see niftilib/nifti1.h)
+
+# nifti1 slice order codes, describing the acquisition order of the slices
+NIFTI_SLICE_UNKNOWN  = 0
+NIFTI_SLICE_SEQ_INC  = 1
+NIFTI_SLICE_SEQ_DEC  = 2
+NIFTI_SLICE_ALT_INC  = 3
+NIFTI_SLICE_ALT_DEC  = 4
+NIFTI_SLICE_ALT_INC2 = 5
+NIFTI_SLICE_ALT_DEC2 = 6
+
+
+# ============================================================================
 # NIFTI extension codes, which are defined here:
 # https://github.com/NIFTI-Imaging/nifti_clib/blob/master/niftilib/nifti1_io.h
 # and see http://nifti.nimh.nih.gov/nifti-1/documentation/faq#Q21
@@ -213,7 +226,7 @@ DICT_nifti_ecode = {
     "NIFTI_ECODE_IGNORE"                :  0,  # formerly UNKNOWN
     "NIFTI_ECODE_DICOM"                 :  2,  # raw DICOM attributes  
     "NIFTI_ECODE_AFNI"                  :  4,  # AFNI
-    "NIFTI_ECODE_COMMENT"               :  6,  # plain ASCII text only              
+    "NIFTI_ECODE_COMMENT"               :  6,  # plain ASCII text only
     "NIFTI_ECODE_XCEDE"                 :  8,  # Xcede
     "NIFTI_ECODE_JIMDIMINFO"            : 10,  # 
     "NIFTI_ECODE_WORKFLOW_FWDS"         : 12,  # workflow-based approaches

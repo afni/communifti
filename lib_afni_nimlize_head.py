@@ -10,7 +10,8 @@
 #
 # ============================================================================
 
-import os, sys, copy
+import sys
+import struct
 
 # ============================================================================
 # list of AFNI HEAD attributes that are removed when creating NIFTI
@@ -42,7 +43,9 @@ LIST_afni_attr_badlist = [
 # ============================================================================
 
 def nimlize_afni_adict(Adict, Ndict, remove_badlist=True, verb=1):
-    """
+    """Create a dictionary from the AFNI HEAD dictionary (and a bit of
+info from the NIFTI dict created from it), to prepare for making AFNI's
+NIML-format extension for a NIFTI file.
 
 Parameters
 ----------
@@ -63,7 +66,7 @@ is_fail : int
 nimldict : dict
     dictionary of NIML-format header attributes
 
-"""
+    """
 
     BAD_RETURN = ( -1, {} )
 
@@ -381,6 +384,252 @@ astr : str
     return 0, astr
 
 # ============================================================================
+
+def serialize_nimldict(nimldict, verb=1):
+    """Serialize an AFNI NIML dictionary into NIML/XML text.
+
+    The input nimldict is expected to have the structure produced by
+    nimlize_afni_adict():
+
+        {
+            'name'        : 'AFNI_attributes',
+            'self_idcode' : str,
+            'NIfTI_nums'  : str,
+            'elements'    : [
+                {
+                    'name'     : 'AFNI_atr',
+                    'atr_name' : str,
+                    'ni_type'  : 'int' | 'float' | 'String',
+                    'ni_dimen' : int,
+                    'values'   : list,
+                },
+                ...
+            ]
+        }
+
+    The output follows the text form used by AFNI's NIML writer for
+    NIFTI extensions.
+
+    Parameters
+    ----------
+    nimldict : dict
+        Dictionary representation of the AFNI NIML extension.
+    verb : int
+        Verbosity level.
+
+    Returns
+    -------
+    is_fail : int
+        0 on success, nonzero on failure.
+    niml_text : str
+        Serialized NIML/XML text.
+
+    """
+
+    BAD_RETURN = (-1, '')
+
+    # ------------------------------------------------------------
+    # verify group-level input
+
+    if not isinstance(nimldict, dict):
+        print("** ERROR: nimldict must be a dictionary")
+        return BAD_RETURN
+
+    required = [
+        'name',
+        'self_idcode',
+        'NIfTI_nums',
+        'elements',
+    ]
+
+    for key in required:
+        if key not in nimldict:
+            print("** ERROR: missing nimldict key:", key)
+            return BAD_RETURN
+
+    gname = nimldict['name']
+
+    if gname != 'AFNI_attributes':
+        print("** ERROR: unexpected NIML group name:", gname)
+        return BAD_RETURN
+
+    if not isinstance(nimldict['elements'], list):
+        print("** ERROR: nimldict['elements'] must be a list")
+        return BAD_RETURN
+
+    # ------------------------------------------------------------
+    # XML prolog + group header
+
+    L = []
+
+    L.append("<?xml version='1.0' ?>")
+    L.append("<{}".format(gname))
+
+    L.append(
+        '  self_idcode="{}"'.format(
+            niml_escape(nimldict['self_idcode'])
+        )
+    )
+
+    L.append(
+        '  NIfTI_nums="{}"'.format(
+            niml_escape(nimldict['NIfTI_nums'])
+        )
+    )
+
+    L.append('  ni_form="ni_group" >')
+
+    # ------------------------------------------------------------
+    # individual AFNI attributes
+
+    for elem in nimldict['elements']:
+
+        is_fail, estr = serialize_element(elem)
+        if is_fail:
+            return BAD_RETURN
+
+        L.append(estr)
+        L.append('')
+
+    # ------------------------------------------------------------
+    # group footer
+
+    L.append("</{}>".format(gname))
+
+    niml_text = '\n'.join(L) + '\n'
+
+    if verb > 2:
+        print("++ Serialized AFNI NIML extension:")
+        print("   nelem  : {}".format(len(nimldict['elements'])))
+        print("   nchar  : {}".format(len(niml_text)))
+
+    return 0, niml_text
+
+# ------------------------------------------------------------
+# a few local helper functions for the NIML serializer
+
+def niml_escape(s):
+    """XML/NIML escape a string."""
+
+    s = str(s)
+
+    # '&' must be replaced first
+    s = s.replace('&', '&amp;')
+    s = s.replace('<', '&lt;')
+    s = s.replace('>', '&gt;')
+    s = s.replace('"', '&quot;')
+    s = s.replace("'", '&apos;')
+
+    return s
+
+
+def float32_to_niml(val):
+    """Format like a NIML NI_FLOAT value.
+
+    AFNI stores these values as C floats, so first force the Python
+    value through IEEE-754 float32 and then use the NIML writer's
+    6-significant-digit %g-style representation.
+    """
+
+    # force Python float -> C-style float32
+    fval = struct.unpack('f', struct.pack('f', float(val)))[0]
+
+    # equivalent in intent to C's "%12.6g" after stripping spaces
+    return format(fval, '.6g')
+
+
+def serialize_element(elem):
+    """Serialize one AFNI_atr dictionary."""
+
+    BAD_RETURN = (-1, '')
+
+    required = [
+        'name',
+        'atr_name',
+        'ni_type',
+        'ni_dimen',
+        'values',
+    ]
+
+    for key in required:
+        if key not in elem:
+            print("** ERROR: missing NIML element key:", key)
+            return BAD_RETURN
+
+    ename    = elem['name']
+    atr_name = elem['atr_name']
+    ni_type  = elem['ni_type']
+    ni_dimen = elem['ni_dimen']
+    values   = elem['values']
+
+    if ename != 'AFNI_atr':
+        print("** ERROR: unexpected NIML element name:", ename)
+        return BAD_RETURN
+
+    if ni_type not in ['int', 'float', 'String']:
+        print("** ERROR: unsupported NIML ni_type:", ni_type)
+        return BAD_RETURN
+
+    if not isinstance(values, list):
+        print("** ERROR: NIML element values are not a list:")
+        print("   atr_name:", atr_name)
+        return BAD_RETURN
+
+    if ni_dimen != len(values):
+        print("** ERROR: NIML ni_dimen/value-count mismatch:")
+        print("   atr_name : {}".format(atr_name))
+        print("   ni_dimen : {}".format(ni_dimen))
+        print("   nvalues  : {}".format(len(values)))
+        return BAD_RETURN
+
+    L = []
+
+    # element header
+    L.append("<{}".format(ename))
+    L.append('  ni_type="{}"'.format(niml_escape(ni_type)))
+    L.append('  ni_dimen="{}"'.format(ni_dimen))
+    L.append('  atr_name="{}" >'.format(niml_escape(atr_name)))
+
+    # data values
+    if ni_type == 'int':
+
+        for val in values:
+            if not isinstance(val, int) or isinstance(val, bool):
+                print("** ERROR: non-int value in NIML int element:")
+                print("   atr_name:", atr_name)
+                return BAD_RETURN
+
+            L.append(" {}".format(val))
+
+    elif ni_type == 'float':
+
+        for val in values:
+            if not isinstance(val, float):
+                print("** ERROR: non-float value in NIML float element:")
+                print("   atr_name:", atr_name)
+                return BAD_RETURN
+
+            L.append(" {}".format(float32_to_niml(val)))
+
+    elif ni_type == 'String':
+
+        for val in values:
+            if not isinstance(val, str):
+                print("** ERROR: non-str value in NIML String element:")
+                print("   atr_name:", atr_name)
+                return BAD_RETURN
+
+            L.append(' "{}"'.format(niml_escape(val)))
+
+    # element footer
+    L.append("</{}>".format(ename))
+
+    return 0, '\n'.join(L)
+
+
+
+# ============================================================================
+
 
 if __name__ == "__main__" : 
 

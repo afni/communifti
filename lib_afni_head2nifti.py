@@ -32,8 +32,9 @@ import sys, copy
 import numpy as np
 
 # **eventually, change how this is imported when it is a module
-from .       import lib_nifti_defs     as lnd
-from .       import lib_afni_read_head as LARH
+from .       import lib_nifti_defs        as lnd
+from .       import lib_afni_read_head    as LARH
+from .       import lib_afni_nimlize_head as LANH
 
 # ============================================================================
 # dictionaries of notes about NIFTI field keys with special
@@ -141,7 +142,7 @@ Ndict : dict
     return 0, Ndict
 
 
-def make_nifti_header_from_Adict(Adict, verb=1 ):
+def make_nifti_header_from_Adict(Adict, do_afni_ext=True, verb=1 ):
     """Given the dictionary of AFNI header attributes Adict, calculate all
 NIFTI header fields and return that information as a dictionary.
 
@@ -149,6 +150,9 @@ Parameters
 ----------
 Adict : dict
     dictionary of AFNI header attributes; each value is a list
+do_afni_ext : bool
+    make a NIML-formatted version of the AFNI HEAD file to be used as 
+    a NIFTI extension
 verb : int
     verbosity level for messages whilst working
 
@@ -208,6 +212,7 @@ Ndict : dict
 
     # **** add the remaining ones here
 
+
     # apply all of those
     Ndict['datatype']       = [datatype]
     Ndict['bitpix']         = [bitpix]
@@ -232,7 +237,9 @@ Ndict : dict
     Ndict['slice_duration'] = [slice_duration]
     Ndict['toffset']        = [toffset]
     Ndict['dim_info']       = [dim_info]
-    # **** add the remaining ones here
+
+    # **** add any remaining ones here
+
 
     # ... and all the unmapped ones
     for key in dict_nifti1_unmapped_by_afni:
@@ -242,9 +249,18 @@ Ndict : dict
     for key in lnd.ALL_nifti1_unused_keys:
         Ndict[key] = [lnd.dict_nifti1_unused[key]]
 
-    # ... and all the unused ones ***will be mapped at some point****
+    # ... and all the unknown ones ***will be mapped at some point****
     for key in TMP_dict_nifti1_unknown.keys():
         Ndict[key] = [TMP_dict_nifti1_unknown[key]]
+
+    # ... and afni extension, which is in the form of a nimldict
+    if do_afni_ext : 
+        is_fail, nimldict = LANH.nimlize_afni_adict(Adict, Ndict, verb=verb)
+        if is_fail :  return BAD_RETURN
+
+        # add as a list: key for the AFNI ext code; nimldict itself
+        Ndict['ext'] = ["NIFTI_ECODE_AFNI", nimldict]
+
 
     return 0, Ndict
 
