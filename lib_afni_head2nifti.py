@@ -35,6 +35,7 @@ import numpy as np
 from .       import lib_nifti_defs        as lnd
 from .       import lib_afni_read_head    as LARH
 from .       import lib_afni_nimlize_head as LANH
+from .       import lib_nifti_ext         as LNE
 
 # ============================================================================
 # dictionaries of notes about NIFTI field keys with special
@@ -258,9 +259,17 @@ Ndict : dict
         # Create the NIML extension by first getting the dictionary...
         is_fail, niml_dict = LANH.nimlize_afni_adict(Adict, Ndict, verb=verb)
         if is_fail :  return BAD_RETURN
+
         # ... from which the text format is created
         is_fail, niml_text = LANH.serialize_niml_dict(niml_dict, verb=verb)
         if is_fail :  return BAD_RETURN
+
+        # ... from which we generate the correctly formatted+padded
+        # extension-ready content and esize (extension size) value
+        is_fail, ext_content, esize = \
+            LNE.pack_nifti_extension_content(
+                niml_text, add_nul=True, verb=verb
+            )
 
         # also get NIFTI ext code
         ecode = lnd.DICT_nifti_ecode['NIFTI_ECODE_AFNI']
@@ -269,7 +278,8 @@ Ndict : dict
         Ndict['ext'] = [
             {
                 'ecode'   : ecode,
-                'content' : niml_text,
+                'esize'   : esize,
+                'content' : ext_content,
             }
         ]
 
