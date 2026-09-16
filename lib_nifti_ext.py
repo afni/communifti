@@ -10,7 +10,6 @@
 # ============================================================================
 
 import sys
-import struct
 
 # ============================================================================
 # general preparation of text content to be valid NIFTI extension
